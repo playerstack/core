@@ -1,0 +1,89 @@
+{
+  "name": "@playerstack/core",
+  "version": "0.1.0-alpha.0",
+  "description": "Framework-agnostic media engine for video and audio playback with HLS, DASH, FLV and native formats",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js",
+      "types": "./dist/types/index.d.ts"
+    },
+    "./utils": {
+      "import": "./dist/esm/utils/index.js",
+      "require": "./dist/cjs/utils/index.js",
+      "types": "./dist/types/utils/index.d.ts"
+    },
+    "./i18n": {
+      "import": "./dist/esm/i18n/index.js",
+      "require": "./dist/cjs/i18n/index.js",
+      "types": "./dist/types/i18n/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "LICENSE.md"
+  ],
+  "scripts": {
+    "clean": "rimraf dist coverage",
+    "build": "npm run build:esm && npm run build:cjs && npm run build:types",
+    "build:esm": "esbuild src/index.ts src/utils/index.ts src/i18n/index.ts --outdir=dist/esm --format=esm --platform=browser --target=es2020 --sourcemap",
+    "build:cjs": "esbuild src/index.ts src/utils/index.ts src/i18n/index.ts --outdir=dist/cjs --format=cjs --platform=browser --target=es2020 --sourcemap",
+    "build:types": "tsc --emitDeclarationOnly --outDir dist/types",
+    "lint": "eslint \"src/**/*.ts\"",
+    "lint:fix": "eslint \"src/**/*.ts\" --fix",
+    "format": "prettier --check \"src/**/*.ts\"",
+    "format:fix": "prettier --write \"src/**/*.ts\"",
+    "test": "jest --forceExit",
+    "test:cov": "jest --coverage --forceExit",
+    "preversion": "npm run lint && npm run test",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/playerstack/core.git"
+  },
+  "author": "Oscar Garces (https://github.com/soyvillareal)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/playerstack/core/issues"
+  },
+  "homepage": "https://github.com/playerstack/core#readme",
+  "dependencies": {
+    "load-script": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@types/node": "^20.17.11",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "esbuild": "^0.20.2",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^10.0.1",
+    "eslint-plugin-prettier": "^5.2.1",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "jest-junit": "^16.0.0",
+    "prettier": "^3.4.2",
+    "rimraf": "^3.0.2",
+    "ts-jest": "^29.1.2",
+    "typescript": "^5.4.0"
+  },
+  "keywords": [
+    "media",
+    "player",
+    "video",
+    "audio",
+    "hls",
+    "dash",
+    "flv",
+    "streaming",
+    "framework-agnostic"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  }
+}

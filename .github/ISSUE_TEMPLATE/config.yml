@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: ❓ Help / Questions
+    about: Have a question? Open a discussion thread.
+    url: https://github.com/playerstack/core/discussions/new?category=q-a

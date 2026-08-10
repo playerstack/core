@@ -1,0 +1,96 @@
+import { MediaEngine } from '../src/media-engine';
+
+describe('MediaEngine', () => {
+  let video: HTMLVideoElement;
+  let engine: MediaEngine;
+
+  beforeEach(() => {
+    video = document.createElement('video');
+    // Mock play() to return a resolved promise
+    video.play = jest.fn().mockResolvedValue(undefined);
+    engine = new MediaEngine(video);
+  });
+
+  afterEach(() => {
+    engine.destroy();
+  });
+
+  it('creates engine with a video element', () => {
+    expect(engine.getElement()).toBe(video);
+  });
+
+  it('play() calls video.play()', () => {
+    engine.play();
+    expect(video.play).toHaveBeenCalled();
+  });
+
+  it('pause() calls video.pause()', () => {
+    video.pause = jest.fn();
+    engine.pause();
+    expect(video.pause).toHaveBeenCalled();
+  });
+
+  it('setVolume() clamps between 0 and 1', () => {
+    engine.setVolume(0.5);
+    expect(video.volume).toBe(0.5);
+
+    engine.setVolume(2);
+    expect(video.volume).toBe(1);
+
+    engine.setVolume(-1);
+    expect(video.volume).toBe(0);
+  });
+
+  it('mute/unmute toggle muted state', () => {
+    engine.mute();
+    expect(video.muted).toBe(true);
+    engine.unmute();
+    expect(video.muted).toBe(false);
+  });
+
+  it('setPlaybackRate changes playback rate', () => {
+    engine.setPlaybackRate(2);
+    expect(video.playbackRate).toBe(2);
+  });
+
+  it('setLoop changes loop property', () => {
+    engine.setLoop(true);
+    expect(video.loop).toBe(true);
+    engine.setLoop(false);
+    expect(video.loop).toBe(false);
+  });
+
+  it('getState() returns state snapshot', () => {
+    const state = engine.getState();
+    expect(state).toHaveProperty('playing');
+    expect(state).toHaveProperty('paused');
+    expect(state).toHaveProperty('volume');
+    expect(state).toHaveProperty('muted');
+    expect(state).toHaveProperty('playbackRate');
+    expect(state).toHaveProperty('loop');
+  });
+
+  it('emits events from video element', () => {
+    const handler = jest.fn();
+    engine.on('pause', handler);
+    video.dispatchEvent(new Event('pause'));
+    expect(handler).toHaveBeenCalled();
+  });
+
+  it('stop() removes src attribute', () => {
+    video.src = 'test.mp4';
+    engine.stop();
+    expect(video.getAttribute('src')).toBeNull();
+  });
+
+  it('destroy() prevents further operations', () => {
+    engine.destroy();
+    // Should not throw after destroy
+    expect(() => engine.play()).not.toThrow();
+  });
+
+  it('load() sets video src for native formats', () => {
+    engine.load('video.mp4');
+    expect(video.src).toContain('video.mp4');
+  });
+});
