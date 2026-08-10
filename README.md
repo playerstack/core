@@ -1,5 +1,8 @@
 # @playerstack/core
 
+[![npm version](https://img.shields.io/npm/v/@playerstack/core.svg)](https://www.npmjs.com/package/@playerstack/core)
+[![Test Coverage](https://img.shields.io/codecov/c/github/playerstack/core.svg)](https://codecov.io/gh/playerstack/core)
+
 Framework-agnostic media engine for video and audio playback. Supports HLS, DASH, FLV and native HTML5 media formats.
 
 This package provides the core playback logic used by framework-specific wrappers like [`@playerstack/reactjs`](https://github.com/playerstack/reactjs).
