@@ -1,4 +1,4 @@
-const COOKIE_PREFIX = 'ps_';
+const COOKIE_PREFIX = 'rmp_';
 
 /**
  * Get a cookie value by name.

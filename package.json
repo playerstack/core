@@ -28,9 +28,7 @@
   ],
   "scripts": {
     "clean": "rimraf dist coverage",
-    "build": "npm run build:esm && npm run build:cjs && npm run build:types",
-    "build:esm": "esbuild src/index.ts src/utils/index.ts src/i18n/index.ts --outdir=dist/esm --format=esm --platform=browser --target=es2020 --sourcemap",
-    "build:cjs": "esbuild src/index.ts src/utils/index.ts src/i18n/index.ts --outdir=dist/cjs --format=cjs --platform=browser --target=es2020 --sourcemap",
+    "build": "node scripts/build.js",
     "build:types": "tsc --emitDeclarationOnly --outDir dist/types",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint \"src/**/*.ts\" --fix",
@@ -39,7 +37,7 @@
     "test": "jest --forceExit",
     "test:cov": "jest --coverage --forceExit",
     "preversion": "npm run lint && npm run test",
-    "prepublishOnly": "npm run clean && npm run build"
+    "prepublishOnly": "npm run build"
   },
   "repository": {
     "type": "git",
