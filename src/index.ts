@@ -38,7 +38,15 @@ export {
   omit,
   getGlobal,
   getSDK,
+  parseVTTCaptions,
+  getActiveCues,
+  hexToRgba,
+  getEdgeStyleCSS,
+  DEFAULT_CAPTION_STYLE,
+  CAPTION_STYLE_OPTIONS,
 } from './utils/index';
+
+export type { VTTCue, CaptionStyleOptions } from './utils/captions';
 
 // i18n
 export { getTranslations, en, es } from './i18n/index';
