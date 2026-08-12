@@ -27,6 +27,21 @@ execSync(
   { stdio: 'inherit' },
 );
 
+// Fix ESM imports: add .js extensions to relative imports (required for strict ESM resolution)
+const esmFiles = findFiles('dist/esm', '.js');
+for (const file of esmFiles) {
+  let content = fs.readFileSync(file, 'utf8');
+  // Match: from "./path" or from '../path' (without .js extension)
+  content = content.replace(
+    /from\s+["'](\.[^"']+)["']/g,
+    (match, importPath) => {
+      if (importPath.endsWith('.js')) return match;
+      return `from "${importPath}.js"`;
+    },
+  );
+  fs.writeFileSync(file, content);
+}
+
 // CJS
 execSync(
   `npx esbuild ${entryPoints} --outdir=dist/cjs --format=cjs --platform=browser --target=es2020 --sourcemap`,
