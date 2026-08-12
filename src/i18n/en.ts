@@ -37,4 +37,9 @@ export default {
   windowOpacity: 'Window opacity',
   edgeStyle: 'Character edge style',
   reset: 'Reset',
+  skipBack: 'Back 10s',
+  skipForward: 'Forward 10s',
+  unmute: 'Unmute',
+  close: 'Close',
+  back: 'Back',
 } as const;
