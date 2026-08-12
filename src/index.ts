@@ -3,7 +3,15 @@ export { MediaEngine } from './media-engine';
 export { EventEmitter } from './event-emitter';
 
 // Patterns
-export { canPlay, isAudioUrl, VIDEO_EXTENSIONS, AUDIO_EXTENSIONS, HLS_EXTENSIONS, DASH_EXTENSIONS, FLV_EXTENSIONS } from './patterns';
+export {
+  canPlay,
+  isAudioUrl,
+  VIDEO_EXTENSIONS,
+  AUDIO_EXTENSIONS,
+  HLS_EXTENSIONS,
+  DASH_EXTENSIONS,
+  FLV_EXTENSIONS,
+} from './patterns';
 
 // Constants
 export {
