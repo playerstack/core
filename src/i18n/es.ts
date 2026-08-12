@@ -37,4 +37,9 @@ export default {
   windowOpacity: 'Opacidad de ventana',
   edgeStyle: 'Estilo de borde',
   reset: 'Restablecer',
+  skipBack: 'Retroceder 10s',
+  skipForward: 'Avanzar 10s',
+  unmute: 'Activar sonido',
+  close: 'Cerrar',
+  back: 'Atrás',
 } as const;
