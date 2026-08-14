@@ -42,4 +42,7 @@ export default {
   unmute: 'Activar sonido',
   close: 'Cerrar',
   back: 'Atrás',
+  skipAd: 'Omitir',
+  ad: 'Anuncio',
+  sponsored: 'Patrocinado',
 } as const;
