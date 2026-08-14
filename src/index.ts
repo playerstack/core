@@ -2,6 +2,10 @@
 export { MediaEngine } from './media-engine';
 export { EventEmitter } from './event-emitter';
 
+// Live DVR
+export { computeLiveDVRState, sliderPositionToTime, formatLiveOffset } from './live-dvr';
+export type { LiveDVRState, LiveDVRConfig } from './live-dvr';
+
 // Patterns
 export {
   canPlay,

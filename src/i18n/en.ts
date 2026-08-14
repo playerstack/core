@@ -15,6 +15,7 @@ export default {
   auto: 'Auto',
   hd: 'HD',
   live: 'Live',
+  seekToLive: 'Go to live',
   seconds: 'seconds',
   clickToUnmute: 'Click to unmute',
   playbackStuckClickResumePlayback: 'Playback is stuck, click to resume playback.',

@@ -15,6 +15,7 @@ export default {
   auto: 'Auto',
   hd: 'HD',
   live: 'En vivo',
+  seekToLive: 'Ir al directo',
   seconds: 'segundos',
   clickToUnmute: 'Haz clic para activar el sonido',
   playbackStuckClickResumePlayback: 'La reproducción se ha detenido, haz clic para continuar.',

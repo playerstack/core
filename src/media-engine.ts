@@ -268,7 +268,14 @@ export class MediaEngine extends EventEmitter<MediaEngineEvents & Record<string,
     getSDK(HLS_SDK_URL.replace('VERSION', this.config.hlsVersion), HLS_GLOBAL)
       .then((Hls: any) => {
         if (sequence !== this.loadSequence || this._destroyed) return;
-        this.hls = new Hls(this.config.hlsOptions || {});
+
+        // When streaming live content, apply buffer management defaults to prevent
+        // SourceBuffer overflow. These can be overridden via hlsOptions.
+        const liveDefaults = this.config.live
+          ? { maxBufferLength: 30, maxMaxBufferLength: 60, backBufferLength: 30 }
+          : {};
+
+        this.hls = new Hls({ ...liveDefaults, ...(this.config.hlsOptions || {}) });
         this.hls.on(Hls.Events.MANIFEST_PARSED, () => {
           this.emit('ready');
         });
