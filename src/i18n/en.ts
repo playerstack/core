@@ -42,4 +42,7 @@ export default {
   unmute: 'Unmute',
   close: 'Close',
   back: 'Back',
+  skipAd: 'Skip',
+  ad: 'Ad',
+  sponsored: 'Sponsored',
 } as const;
