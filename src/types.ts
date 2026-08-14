@@ -29,6 +29,8 @@ export interface MediaEngineConfig {
   forceDASH?: boolean;
   /** Force FLV.js usage regardless of extension */
   forceFLV?: boolean;
+  /** Whether the stream is a live broadcast (enables optimized buffer management) */
+  live?: boolean;
   /** Additional attributes applied to the media element */
   attributes?: Record<string, string | boolean>;
   /** Track elements configuration */
