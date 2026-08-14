@@ -90,3 +90,12 @@ jobs:
 
       - name: Released ${{ steps.npm-version.outputs.current-version }} ✨
         run: echo ${{ steps.npm-version.outputs.current-version }}
+
+      - name: Notify downstream packages
+        if: ${{ !inputs.dryrun }}
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.DISPATCH_TOKEN }}
+          repository: playerstack/reactjs
+          event-type: core-released
+          client-payload: '{"version": "${{ steps.npm-version.outputs.current-version }}"}'
