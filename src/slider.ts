@@ -42,7 +42,11 @@ export function getClampedPosition({
 /**
  * Convert a pointer X position on a slider into a time value.
  */
-export function getTimeFromSliderPosition(clientX: number, rect: { left: number; width: number }, duration: number): number {
+export function getTimeFromSliderPosition(
+  clientX: number,
+  rect: { left: number; width: number },
+  duration: number,
+): number {
   const w = clientX - rect.left;
   if (w <= 0) return 0;
   if (w >= rect.width) return duration;

@@ -22,7 +22,10 @@ export interface ChapterSegment {
  * @param duration - Total media duration in seconds
  * @returns Array of computed segments with percentages
  */
-export function computeChapterSegments(chapters: ChapterInput[] | null | undefined, duration: number): ChapterSegment[] {
+export function computeChapterSegments(
+  chapters: ChapterInput[] | null | undefined,
+  duration: number,
+): ChapterSegment[] {
   if (!chapters || chapters.length === 0 || duration <= 0) {
     return [];
   }

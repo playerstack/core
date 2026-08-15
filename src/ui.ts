@@ -23,7 +23,6 @@ export const sliderWidth = (isFullscreen: boolean): number => {
   return 55;
 };
 
-
 /**
  * Format a settings menu label (quality → "1080p", speed → "Normal").
  */
@@ -67,7 +66,14 @@ export const buildSettingsOptions = ({
   captionOptions?: Array<{ label: string; value: string }> | null;
   live?: boolean;
   adMode?: boolean;
-  i18n: { speed?: string; quality?: string; captions?: string; auto?: string; off?: string; [key: string]: string | undefined };
+  i18n: {
+    speed?: string;
+    quality?: string;
+    captions?: string;
+    auto?: string;
+    off?: string;
+    [key: string]: string | undefined;
+  };
 }): SettingsOption[] => {
   const options: SettingsOption[] = [];
 
