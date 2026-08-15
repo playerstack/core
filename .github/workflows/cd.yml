@@ -99,3 +99,12 @@ jobs:
           repository: playerstack/reactjs
           event-type: core-released
           client-payload: '{"version": "${{ steps.npm-version.outputs.current-version }}"}'
+
+      - name: Notify audio package
+        if: ${{ !inputs.dryrun }}
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.DISPATCH_TOKEN }}
+          repository: playerstack/audio
+          event-type: core-released
+          client-payload: '{"version": "${{ steps.npm-version.outputs.current-version }}"}'
