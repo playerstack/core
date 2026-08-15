@@ -3,6 +3,7 @@ export { getCookie, setCookie, deleteCookie } from './cookie';
 export { isDesktop, isMobile } from './device';
 export { formatTime, indexBy, omit } from './format';
 export { getGlobal, getSDK } from './sdk';
+export { isTestEnv, enableStubOn } from './env';
 export {
   parseVTTCaptions,
   getActiveCues,
@@ -12,3 +13,5 @@ export {
   CAPTION_STYLE_OPTIONS,
 } from './captions';
 export type { VTTCue, CaptionStyleOptions } from './captions';
+export { parseSpriteVTT, timeCodeToSeconds } from './vtt-sprite';
+export type { SpriteFrame } from './vtt-sprite';

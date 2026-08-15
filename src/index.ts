@@ -50,15 +50,54 @@ export {
   omit,
   getGlobal,
   getSDK,
+  isTestEnv,
+  enableStubOn,
   parseVTTCaptions,
   getActiveCues,
   hexToRgba,
   getEdgeStyleCSS,
   DEFAULT_CAPTION_STYLE,
   CAPTION_STYLE_OPTIONS,
+  parseSpriteVTT,
+  timeCodeToSeconds,
 } from './utils/index';
 
 export type { VTTCue, CaptionStyleOptions } from './utils/captions';
+export type { SpriteFrame } from './utils/vtt-sprite';
+
+// Player State
+export { playerStateInitial, reduceSeekState } from './player-state';
+export type { PlayerState } from './player-state';
+
+// Keyboard
+export { eventsKeyCodes, keyMappings } from './keyboard';
+
+// Chapters
+export { computeChapterSegments, getChapterAtTime } from './chapters';
+export type { ChapterInput, ChapterSegment } from './chapters';
+
+// Heatmap
+export { generateHeatmapPath } from './heatmap';
+export type { HeatmapDataPoint } from './heatmap';
+
+// UI Sizing
+export { buildIconProps, sliderWidth, buildSettingsLabel, buildSettingsOptions } from './ui';
+
+// Reducer
+export { createTypedReducer } from './reducer';
+
+// Slider Math
+export {
+  getEventXCoordinate,
+  getClampedPosition,
+  getTimeFromSliderPosition,
+  getTrackTranslateX,
+  getMouseTranslateX,
+  getVolumePercentage,
+} from './slider';
+
+// Quality Selection
+export { VIDEO_QUALITY_THRESHOLDS, measureNetworkSpeed, getRecommendedVideoQuality } from './quality';
 
 // i18n
 export { getTranslations, en, es } from './i18n/index';
