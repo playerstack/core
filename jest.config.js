@@ -3,6 +3,7 @@ module.exports = {
   testEnvironment: 'jest-environment-jsdom',
   clearMocks: true,
   collectCoverage: false,
+  collectCoverageFrom: ['src/**/*.ts', '!src/types.ts', '!src/types/**', '!src/index.ts', '!src/utils/index.ts'],
   coverageDirectory: 'coverage',
   coverageReporters: ['lcov', 'json', 'clover', 'text'],
   coveragePathIgnorePatterns: ['node_modules', 'dist'],
