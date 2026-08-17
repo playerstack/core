@@ -16,7 +16,9 @@ function findFiles(dir, ext, results = []) {
   return results;
 }
 
-const srcFiles = findFiles('src', '.ts');
+const tsFiles = findFiles('src', '.ts');
+const tsxFiles = findFiles('src', '.tsx');
+const srcFiles = [...tsFiles, ...tsxFiles];
 const entryPoints = srcFiles.join(' ');
 
 console.log(`Building ${srcFiles.length} files...`);
