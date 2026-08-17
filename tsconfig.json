@@ -14,6 +14,7 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
+    "jsx": "react-jsx",
     "outDir": "dist/types",
     "rootDir": "src",
     "baseUrl": ".",
@@ -22,6 +23,6 @@
       "@playerstack/core/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": ["node_modules", "dist", "test", "coverage"]
 }

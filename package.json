@@ -20,6 +20,16 @@
       "import": "./dist/esm/i18n/index.js",
       "require": "./dist/cjs/i18n/index.js",
       "types": "./dist/types/i18n/index.d.ts"
+    },
+    "./icons": {
+      "import": "./dist/esm/icons/index.js",
+      "require": "./dist/cjs/icons/index.js",
+      "types": "./dist/types/icons/index.d.ts"
+    },
+    "./icons/mobile": {
+      "import": "./dist/esm/icons/mobile/index.js",
+      "require": "./dist/cjs/icons/mobile/index.js",
+      "types": "./dist/types/icons/mobile/index.d.ts"
     }
   },
   "files": [
@@ -30,10 +40,10 @@
     "clean": "rimraf dist coverage",
     "build": "node scripts/build.js",
     "build:types": "tsc --emitDeclarationOnly --outDir dist/types",
-    "lint": "eslint \"src/**/*.ts\"",
-    "lint:fix": "eslint \"src/**/*.ts\" --fix",
-    "format": "prettier --check \"src/**/*.ts\"",
-    "format:fix": "prettier --write \"src/**/*.ts\"",
+    "lint": "eslint \"src/**/*.{ts,tsx}\"",
+    "lint:fix": "eslint \"src/**/*.{ts,tsx}\" --fix",
+    "format": "prettier --check \"src/**/*.{ts,tsx}\"",
+    "format:fix": "prettier --write \"src/**/*.{ts,tsx}\"",
     "test": "jest --forceExit",
     "test:cov": "jest --coverage --forceExit",
     "preversion": "npm run lint && npm run test",
@@ -52,9 +62,18 @@
   "dependencies": {
     "load-script": "^1.0.0"
   },
+  "peerDependencies": {
+    "react": "^18.3.1"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "@types/jest": "^29.5.14",
     "@types/node": "^20.17.11",
+    "@types/react": "^18.3.31",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
     "esbuild": "^0.20.2",
