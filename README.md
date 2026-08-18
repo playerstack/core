@@ -39,6 +39,68 @@ engine.on('error', (err) => {
 engine.load('https://example.com/video.m3u8');
 ```
 
+## Subpath Exports
+
+This package exposes granular subpath exports so consumers can import only what they need. This is especially important for React Native, where Metro does not tree-shake — native packages must import only DOM-free subpaths.
+
+### React Native–safe subpaths (DOM-free)
+
+These subpaths have zero browser global dependencies and are safe to use in React Native:
+
+| Subpath | Description |
+|---------|-------------|
+| `@playerstack/core/hooks` | Shared React hooks (useChapters, useAutoHide, etc.) |
+| `@playerstack/core/patterns` | `canPlay`, format extension regex |
+| `@playerstack/core/chapters` | `computeChapterSegments`, `getChapterAtTime` |
+| `@playerstack/core/heatmap` | `generateHeatmapPath` |
+| `@playerstack/core/i18n` | `getTranslations`, locale data |
+| `@playerstack/core/keyboard` | `eventsKeyCodes`, key mappings |
+| `@playerstack/core/live-dvr` | `computeLiveDVRState`, `formatLiveOffset` |
+| `@playerstack/core/slider` | `getTimeFromSliderPosition`, slider math |
+| `@playerstack/core/player-state` | `playerStateInitial`, state reducers |
+| `@playerstack/core/quality` | `getRecommendedVideoQuality` (pure function) |
+| `@playerstack/core/reducer` | `createTypedReducer` factory |
+| `@playerstack/core/ui` | `buildIconProps`, `settingsInitialState` |
+| `@playerstack/core/adapters` | Platform adapter type definitions |
+| `@playerstack/core/utils/format` | `formatTime`, `indexBy`, `omit` |
+| `@playerstack/core/utils/env` | `isTestEnv`, `enableStubOn` |
+| `@playerstack/core/utils/captions` | `parseVTTCaptions`, `getActiveCues`, `hexToRgba` |
+| `@playerstack/core/utils/vtt-sprite` | `parseSpriteVTT`, `timeCodeToSeconds` |
+
+### Web-only subpaths (require browser globals)
+
+These subpaths use `window`, `document`, `navigator`, or load external scripts. Do **not** import them in React Native:
+
+| Subpath | Reason |
+|---------|--------|
+| `@playerstack/core` (main) | Re-exports everything including DOM modules |
+| `@playerstack/core/constants` | Evaluates `navigator`/`window` at load |
+| `@playerstack/core/engine` | Full DOM dependency (`HTMLMediaElement`) |
+| `@playerstack/core/utils/cookie` | Uses `document.cookie` |
+| `@playerstack/core/utils/device` | Evaluates `window`/`navigator` at load |
+| `@playerstack/core/utils/sdk` | Uses `window` + `load-script` |
+| `@playerstack/core/utils/media` | Uses `window.MediaStream`, `document` |
+
+### Usage examples
+
+**Web packages** (backward compatible):
+```ts
+// Main entry still works for web
+import { formatTime, IS_IOS, getSDK } from '@playerstack/core';
+
+// Granular imports (better tree-shaking)
+import { formatTime } from '@playerstack/core/utils/format';
+import { IS_IOS } from '@playerstack/core/constants';
+```
+
+**React Native packages** (must use granular subpaths):
+```ts
+import { formatTime, indexBy } from '@playerstack/core/utils/format';
+import { getTranslations } from '@playerstack/core/i18n';
+import { computeChapterSegments } from '@playerstack/core/chapters';
+import { useChapters, useAutoHide } from '@playerstack/core/hooks';
+```
+
 ## Features
 
 - **Framework-agnostic** — works with React, Vue, Svelte, Solid, Angular, vanilla JS, or any framework

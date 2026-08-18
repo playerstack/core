@@ -7,7 +7,7 @@ function findFiles(dir, ext, results = []) {
   for (const entry of entries) {
     const fullPath = path.join(dir, entry.name).replace(/\\/g, '/');
     if (entry.isDirectory()) {
-      if (entry.name === 'types') continue; // skip .d.ts declarations folder
+      if (entry.name === 'declarations') continue; // skip .d.ts declarations folder
       findFiles(fullPath, ext, results);
     } else if (entry.name.endsWith(ext)) {
       results.push(fullPath);

@@ -15,7 +15,7 @@ import {
   DEFAULT_DASH_VERSION,
   DEFAULT_FLV_VERSION,
 } from './constants';
-import type { MediaEngineConfig, MediaEngineEvents, MediaState } from './types';
+import type { MediaEngineConfig, MediaEngineEvents, MediaState } from './types/media.types';
 
 /**
  * Framework-agnostic media engine.

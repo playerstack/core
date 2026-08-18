@@ -27,3 +27,23 @@ export const FLV_GLOBAL = 'flvjs';
 export const DEFAULT_HLS_VERSION = '1.5.7';
 export const DEFAULT_DASH_VERSION = '4.7.4';
 export const DEFAULT_FLV_VERSION = '1.6.2';
+
+/**
+ * Default progress polling interval in milliseconds.
+ */
+export const DEFAULT_PROGRESS_INTERVAL = 1000;
+
+/**
+ * Default media configuration shared by all PlayerStack wrappers.
+ * Consumers spread this into their defaultProps.config, adding package-specific keys.
+ */
+export const defaultMediaConfig = {
+  forceHLS: false,
+  forceDASH: false,
+  forceFLV: false,
+  hlsOptions: {} as Record<string, unknown>,
+  hlsVersion: DEFAULT_HLS_VERSION,
+  dashVersion: DEFAULT_DASH_VERSION,
+  flvVersion: DEFAULT_FLV_VERSION,
+  forceDisableHls: false,
+} as const;

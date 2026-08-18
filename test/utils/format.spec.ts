@@ -37,7 +37,7 @@ describe('indexBy', () => {
 });
 
 describe('omit', () => {
-  it('removes specified keys from object', () => {
+  it('removes specified keys from object (single array — backward compat)', () => {
     const obj = { a: 1, b: 2, c: 3 };
     expect(omit(obj, ['b'])).toEqual({ a: 1, c: 3 });
   });
@@ -45,5 +45,20 @@ describe('omit', () => {
   it('returns full object when no keys match', () => {
     const obj = { a: 1, b: 2 };
     expect(omit(obj, ['x'])).toEqual({ a: 1, b: 2 });
+  });
+
+  it('accepts multiple arrays of keys', () => {
+    const obj = { a: 1, b: 2, c: 3, d: 4 };
+    expect(omit(obj, ['a'], ['b'], ['c'])).toEqual({ d: 4 });
+  });
+
+  it('accepts individual string keys (variadic)', () => {
+    const obj = { a: 1, b: 2, c: 3 };
+    expect(omit(obj, 'a', 'b')).toEqual({ c: 3 });
+  });
+
+  it('accepts mixed strings and arrays', () => {
+    const obj = { a: 1, b: 2, c: 3, d: 4 };
+    expect(omit(obj, 'a', ['b', 'c'])).toEqual({ d: 4 });
   });
 });

@@ -14,4 +14,4 @@ export {
 } from './captions';
 export type { VTTCue, CaptionStyleOptions } from './captions';
 export { parseSpriteVTT, timeCodeToSeconds } from './vtt-sprite';
-export type { SpriteFrame } from './vtt-sprite';
+export type { VttSpriteCue, SpriteFrame } from './vtt-sprite';

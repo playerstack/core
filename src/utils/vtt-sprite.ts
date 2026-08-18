@@ -3,7 +3,7 @@
  * Parses VTT files containing image sprite coordinates.
  */
 
-export interface SpriteFrame {
+export interface VttSpriteCue {
   from: number;
   to: number;
   file: string;
@@ -12,6 +12,11 @@ export interface SpriteFrame {
   w: string;
   h: string;
 }
+
+/**
+ * @deprecated Use `VttSpriteCue` instead. Kept for backward compatibility.
+ */
+export type SpriteFrame = VttSpriteCue;
 
 /**
  * Convert a timecode string (e.g. "01:23:45" or "01:23:45:12") to seconds.
@@ -69,10 +74,10 @@ export function timeCodeToSeconds(timeCode: string): number {
  * Parse a VTT sprite file into an array of frames with coordinates.
  * Supports both `#xywh=` and `?xywh=` separators.
  */
-export function parseSpriteVTT(vttString: string): SpriteFrame[] {
+export function parseSpriteVTT(vttString: string): VttSpriteCue[] {
   let from = 0;
   let to = 0;
-  const frames: SpriteFrame[] = [];
+  const frames: VttSpriteCue[] = [];
 
   for (const line of vttString.split('\n')) {
     if (/-->/.test(line)) {

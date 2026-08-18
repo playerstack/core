@@ -7,26 +7,163 @@
   "types": "dist/types/index.d.ts",
   "exports": {
     ".": {
+      "react-native": "./dist/esm/index.js",
       "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.js",
       "types": "./dist/types/index.d.ts"
     },
-    "./utils": {
-      "import": "./dist/esm/utils/index.js",
-      "require": "./dist/cjs/utils/index.js",
-      "types": "./dist/types/utils/index.d.ts"
+    "./hooks": {
+      "react-native": "./dist/esm/hooks/index.js",
+      "import": "./dist/esm/hooks/index.js",
+      "require": "./dist/cjs/hooks/index.js",
+      "types": "./dist/types/hooks/index.d.ts"
+    },
+    "./patterns": {
+      "react-native": "./dist/esm/patterns.js",
+      "import": "./dist/esm/patterns.js",
+      "require": "./dist/cjs/patterns.js",
+      "types": "./dist/types/patterns.d.ts"
+    },
+    "./chapters": {
+      "react-native": "./dist/esm/chapters.js",
+      "import": "./dist/esm/chapters.js",
+      "require": "./dist/cjs/chapters.js",
+      "types": "./dist/types/chapters.d.ts"
+    },
+    "./heatmap": {
+      "react-native": "./dist/esm/heatmap.js",
+      "import": "./dist/esm/heatmap.js",
+      "require": "./dist/cjs/heatmap.js",
+      "types": "./dist/types/heatmap.d.ts"
     },
     "./i18n": {
+      "react-native": "./dist/esm/i18n/index.js",
       "import": "./dist/esm/i18n/index.js",
       "require": "./dist/cjs/i18n/index.js",
       "types": "./dist/types/i18n/index.d.ts"
     },
+    "./keyboard": {
+      "react-native": "./dist/esm/keyboard.js",
+      "import": "./dist/esm/keyboard.js",
+      "require": "./dist/cjs/keyboard.js",
+      "types": "./dist/types/keyboard.d.ts"
+    },
+    "./live-dvr": {
+      "react-native": "./dist/esm/live-dvr.js",
+      "import": "./dist/esm/live-dvr.js",
+      "require": "./dist/cjs/live-dvr.js",
+      "types": "./dist/types/live-dvr.d.ts"
+    },
+    "./slider": {
+      "react-native": "./dist/esm/slider.js",
+      "import": "./dist/esm/slider.js",
+      "require": "./dist/cjs/slider.js",
+      "types": "./dist/types/slider.d.ts"
+    },
+    "./player-state": {
+      "react-native": "./dist/esm/player-state.js",
+      "import": "./dist/esm/player-state.js",
+      "require": "./dist/cjs/player-state.js",
+      "types": "./dist/types/player-state.d.ts"
+    },
+    "./quality": {
+      "react-native": "./dist/esm/quality.js",
+      "import": "./dist/esm/quality.js",
+      "require": "./dist/cjs/quality.js",
+      "types": "./dist/types/quality.d.ts"
+    },
+    "./reducer": {
+      "react-native": "./dist/esm/reducer.js",
+      "import": "./dist/esm/reducer.js",
+      "require": "./dist/cjs/reducer.js",
+      "types": "./dist/types/reducer.d.ts"
+    },
+    "./ui": {
+      "react-native": "./dist/esm/ui.js",
+      "import": "./dist/esm/ui.js",
+      "require": "./dist/cjs/ui.js",
+      "types": "./dist/types/ui.d.ts"
+    },
+    "./engine": {
+      "react-native": "./dist/esm/media-engine.js",
+      "import": "./dist/esm/media-engine.js",
+      "require": "./dist/cjs/media-engine.js",
+      "types": "./dist/types/media-engine.d.ts"
+    },
+    "./adapters": {
+      "react-native": "./dist/esm/types/adapters.types.js",
+      "import": "./dist/esm/types/adapters.types.js",
+      "require": "./dist/cjs/types/adapters.types.js",
+      "types": "./dist/types/types/adapters.types.d.ts"
+    },
+    "./utils": {
+      "react-native": "./dist/esm/utils/index.js",
+      "import": "./dist/esm/utils/index.js",
+      "require": "./dist/cjs/utils/index.js",
+      "types": "./dist/types/utils/index.d.ts"
+    },
+    "./utils/format": {
+      "react-native": "./dist/esm/utils/format.js",
+      "import": "./dist/esm/utils/format.js",
+      "require": "./dist/cjs/utils/format.js",
+      "types": "./dist/types/utils/format.d.ts"
+    },
+    "./utils/cookie": {
+      "react-native": "./dist/esm/utils/cookie.js",
+      "import": "./dist/esm/utils/cookie.js",
+      "require": "./dist/cjs/utils/cookie.js",
+      "types": "./dist/types/utils/cookie.d.ts"
+    },
+    "./utils/device": {
+      "react-native": "./dist/esm/utils/device.js",
+      "import": "./dist/esm/utils/device.js",
+      "require": "./dist/cjs/utils/device.js",
+      "types": "./dist/types/utils/device.d.ts"
+    },
+    "./utils/sdk": {
+      "react-native": "./dist/esm/utils/sdk.js",
+      "import": "./dist/esm/utils/sdk.js",
+      "require": "./dist/cjs/utils/sdk.js",
+      "types": "./dist/types/utils/sdk.d.ts"
+    },
+    "./utils/media": {
+      "react-native": "./dist/esm/utils/media.js",
+      "import": "./dist/esm/utils/media.js",
+      "require": "./dist/cjs/utils/media.js",
+      "types": "./dist/types/utils/media.d.ts"
+    },
+    "./utils/env": {
+      "react-native": "./dist/esm/utils/env.js",
+      "import": "./dist/esm/utils/env.js",
+      "require": "./dist/cjs/utils/env.js",
+      "types": "./dist/types/utils/env.d.ts"
+    },
+    "./utils/captions": {
+      "react-native": "./dist/esm/utils/captions.js",
+      "import": "./dist/esm/utils/captions.js",
+      "require": "./dist/cjs/utils/captions.js",
+      "types": "./dist/types/utils/captions.d.ts"
+    },
+    "./utils/vtt-sprite": {
+      "react-native": "./dist/esm/utils/vtt-sprite.js",
+      "import": "./dist/esm/utils/vtt-sprite.js",
+      "require": "./dist/cjs/utils/vtt-sprite.js",
+      "types": "./dist/types/utils/vtt-sprite.d.ts"
+    },
+    "./constants": {
+      "react-native": "./dist/esm/constants.js",
+      "import": "./dist/esm/constants.js",
+      "require": "./dist/cjs/constants.js",
+      "types": "./dist/types/constants.d.ts"
+    },
     "./icons": {
+      "react-native": "./dist/esm/icons/index.js",
       "import": "./dist/esm/icons/index.js",
       "require": "./dist/cjs/icons/index.js",
       "types": "./dist/types/icons/index.d.ts"
     },
     "./icons/mobile": {
+      "react-native": "./dist/esm/icons/mobile/index.js",
       "import": "./dist/esm/icons/mobile/index.js",
       "require": "./dist/cjs/icons/mobile/index.js",
       "types": "./dist/types/icons/mobile/index.d.ts"
@@ -60,7 +197,8 @@
   },
   "homepage": "https://github.com/playerstack/core#readme",
   "dependencies": {
-    "load-script": "^1.0.0"
+    "load-script": "^1.0.0",
+    "react-fast-compare": "^3.2.2"
   },
   "peerDependencies": {
     "react": "^18.3.1"
@@ -71,6 +209,7 @@
     }
   },
   "devDependencies": {
+    "@testing-library/react": "^16.3.2",
     "@types/jest": "^29.5.14",
     "@types/node": "^20.17.11",
     "@types/react": "^18.3.31",
@@ -84,6 +223,7 @@
     "jest-environment-jsdom": "^29.7.0",
     "jest-junit": "^16.0.0",
     "prettier": "^3.4.2",
+    "react-dom": "^18.3.1",
     "rimraf": "^3.0.2",
     "ts-jest": "^29.1.2",
     "typescript": "^5.4.0"
@@ -99,7 +239,20 @@
     "streaming",
     "framework-agnostic"
   ],
-  "sideEffects": false,
+  "sideEffects": [
+    "./dist/esm/constants.js",
+    "./dist/cjs/constants.js",
+    "./dist/esm/utils/device.js",
+    "./dist/cjs/utils/device.js",
+    "./dist/esm/utils/sdk.js",
+    "./dist/cjs/utils/sdk.js",
+    "./dist/esm/utils/media.js",
+    "./dist/cjs/utils/media.js",
+    "./dist/esm/utils/cookie.js",
+    "./dist/cjs/utils/cookie.js",
+    "./dist/esm/media-engine.js",
+    "./dist/cjs/media-engine.js"
+  ],
   "engines": {
     "node": ">=18"
   }

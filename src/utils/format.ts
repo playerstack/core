@@ -26,13 +26,23 @@ export function indexBy<T extends Record<string, unknown>>(array: T[], key: stri
 
 /**
  * Omit specified keys from an object.
+ * Accepts variadic arguments: each can be a single key string or an array of key strings.
+ * Backward compatible: `omit(obj, ['a', 'b'])` still works.
  */
-export function omit<T extends Record<string, unknown>>(object: T, keys: string[]): Partial<T> {
+export function omit<T extends Record<string, unknown>>(obj: T, ...keysOrArrays: Array<string | string[]>): Partial<T> {
+  const keys: string[] = [];
+  for (const arg of keysOrArrays) {
+    if (Array.isArray(arg)) {
+      keys.push(...arg);
+    } else {
+      keys.push(arg);
+    }
+  }
   const output: Partial<T> = {};
-  const objectKeys = Object.keys(object) as Array<keyof T>;
+  const objectKeys = Object.keys(obj) as Array<keyof T>;
   for (const key of objectKeys) {
     if (keys.indexOf(key as string) === -1) {
-      output[key] = object[key];
+      output[key] = obj[key];
     }
   }
   return output;
