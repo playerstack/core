@@ -4,7 +4,7 @@ export { EventEmitter } from './event-emitter';
 
 // Live DVR
 export { computeLiveDVRState, sliderPositionToTime, formatLiveOffset } from './live-dvr';
-export type { LiveDVRState, LiveDVRConfig } from './live-dvr';
+export type { LiveDVRState, LiveDVRConfig } from './types/live-dvr.types';
 
 // Patterns
 export {
@@ -32,6 +32,8 @@ export {
   DEFAULT_HLS_VERSION,
   DEFAULT_DASH_VERSION,
   DEFAULT_FLV_VERSION,
+  DEFAULT_PROGRESS_INTERVAL,
+  defaultMediaConfig,
 } from './constants';
 
 // Utils (re-export for convenience)
@@ -62,26 +64,31 @@ export {
   timeCodeToSeconds,
 } from './utils/index';
 
-export type { VTTCue, CaptionStyleOptions } from './utils/captions';
-export type { SpriteFrame } from './utils/vtt-sprite';
+export type { VTTCue, CaptionStyleOptions } from './types/utils/captions.types';
+export type { VttSpriteCue, SpriteFrame } from './utils/vtt-sprite';
+
+// Sprite Frame Computation
+export { computeSpriteFrame } from './sprite';
+export type { SpriteCue, ComputedSpriteFrame } from './types/sprite.types';
 
 // Player State
-export { playerStateInitial, reduceSeekState } from './player-state';
-export type { PlayerState } from './player-state';
+export { playerStateInitial, audioPlayerStateInitial, reduceSeekState } from './player-state';
+export type { PlayerState, AudioPlayerState } from './player-state';
 
 // Keyboard
 export { eventsKeyCodes, keyMappings } from './keyboard';
 
 // Chapters
 export { computeChapterSegments, getChapterAtTime } from './chapters';
-export type { ChapterInput, ChapterSegment } from './chapters';
+export type { ChapterInput, ChapterSegment } from './types/chapters.types';
 
 // Heatmap
 export { generateHeatmapPath } from './heatmap';
-export type { HeatmapDataPoint } from './heatmap';
+export type { HeatmapDataPoint } from './types/heatmap.types';
 
 // UI Sizing
-export { buildIconProps, sliderWidth, buildSettingsLabel, buildSettingsOptions } from './ui';
+export { buildIconProps, sliderWidth, buildSettingsLabel, buildSettingsOptions, settingsInitialState } from './ui';
+export type { SettingsOption } from './types/ui.types';
 
 // Reducer
 export { createTypedReducer } from './reducer';
@@ -103,6 +110,9 @@ export { VIDEO_QUALITY_THRESHOLDS, measureNetworkSpeed, getRecommendedVideoQuali
 export { getTranslations, en, es } from './i18n/index';
 export type { Translations, SupportedLanguage } from './i18n/index';
 
+// Adapters
+export type { AdsPlatform, AdsConfig, VolumeAdapter, DVRAdapter, PlayerAdapter } from './types/adapters.types';
+
 // Types
 export type {
   MediaSource,
@@ -111,4 +121,4 @@ export type {
   MediaEngineEvents,
   MediaState,
   MediaEventHandler,
-} from './types';
+} from './types/media.types';

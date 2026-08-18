@@ -1,5 +1,5 @@
 import React from 'react';
-import type { IconProps } from '../types';
+import type { IconProps } from '../../types/icons.types';
 
 const MobileSettingsGearIcon: React.FC<IconProps> = ({ width = '100%', height = '100%' }) => (
   <svg viewBox="0 0 36 36" width={width} height={height} xmlns="http://www.w3.org/2000/svg">

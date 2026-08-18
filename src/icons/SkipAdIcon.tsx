@@ -1,5 +1,5 @@
 import React from 'react';
-import type { IconProps } from './types';
+import type { IconProps } from '../types/icons.types';
 
 const SkipAdIcon: React.FC<IconProps> = ({ width = 24, height = 24 }) => (
   <svg viewBox="11 10 14 16" width={width} height={height} fill="currentColor" xmlns="http://www.w3.org/2000/svg">

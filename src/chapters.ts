@@ -1,18 +1,6 @@
-/**
- * Chapter segment definition.
- */
-export interface ChapterInput {
-  title: string;
-  startTime: number;
-}
+import type { ChapterInput, ChapterSegment } from './types/chapters.types';
 
-export interface ChapterSegment {
-  title: string;
-  startTime: number;
-  endTime: number;
-  startPercent: number;
-  endPercent: number;
-}
+export type { ChapterInput, ChapterSegment } from './types/chapters.types';
 
 /**
  * Compute chapter segments from raw chapter definitions and total duration.

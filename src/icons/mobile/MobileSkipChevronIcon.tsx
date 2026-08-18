@@ -1,5 +1,5 @@
 import React from 'react';
-import type { IconProps } from '../types';
+import type { IconProps } from '../../types/icons.types';
 
 const MobileSkipChevronIcon: React.FC<IconProps> = ({ width = 20, height = 20 }) => (
   <svg viewBox="0 0 24 24" preserveAspectRatio="xMidYMid meet" width={width} height={height}>

@@ -3,6 +3,10 @@
  * Framework-agnostic — used by skin components for consistent sizing.
  */
 
+import type { SettingsOption } from './types/ui.types';
+
+export type { SettingsOption } from './types/ui.types';
+
 /**
  * Get icon dimensions based on fullscreen state.
  */
@@ -24,8 +28,15 @@ export const sliderWidth = (isFullscreen: boolean): number => {
 };
 
 /**
- * Format a settings menu label (quality → "1080p", speed → "Normal").
+ * Initial state for the settings menu panels.
  */
+export const settingsInitialState = {
+  generalMenu: false,
+  speed: false,
+  quality: false,
+  captions: false,
+} as const;
+
 export const buildSettingsLabel = ({
   label,
   value,
@@ -45,12 +56,6 @@ export const buildSettingsLabel = ({
   }
   return value;
 };
-
-interface SettingsOption {
-  label: string;
-  value: string;
-  options: Array<{ label: string; value: string; isFullHD?: boolean }>;
-}
 
 /**
  * Build the settings overlay menu structure from available options.

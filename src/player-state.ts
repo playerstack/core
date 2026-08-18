@@ -27,6 +27,30 @@ export const playerStateInitial = {
 export type PlayerState = typeof playerStateInitial;
 
 /**
+ * Audio player initial state — subset of playerStateInitial without
+ * fullscreen, PiP, quality, captions, and video-specific fields.
+ */
+export const audioPlayerStateInitial = {
+  kernelError: playerStateInitial.kernelError,
+  seeking: playerStateInitial.seeking,
+  seek: playerStateInitial.seek,
+  played: playerStateInitial.played,
+  loaded: playerStateInitial.loaded,
+  duration: playerStateInitial.duration,
+  isEnded: playerStateInitial.isEnded,
+  isLoading: playerStateInitial.isLoading,
+  isBuffering: playerStateInitial.isBuffering,
+  volume: playerStateInitial.volume,
+  playbackRate: playerStateInitial.playbackRate,
+  hasAudio: playerStateInitial.hasAudio,
+  loop: playerStateInitial.loop,
+  playing: playerStateInitial.playing,
+  isMuted: playerStateInitial.isMuted,
+};
+
+export type AudioPlayerState = typeof audioPlayerStateInitial;
+
+/**
  * Computes the next player state on a seek transition.
  *
  * While seeking, the "ended" overlay is cleared so the user sees the frame

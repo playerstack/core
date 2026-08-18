@@ -1,11 +1,6 @@
-/**
- * Heatmap data point definition.
- */
-export interface HeatmapDataPoint {
-  startTime: number;
-  endTime: number;
-  value: number;
-}
+import type { HeatmapDataPoint } from './types/heatmap.types';
+
+export type { HeatmapDataPoint } from './types/heatmap.types';
 
 /**
  * Generate a smooth SVG stroke path from heatmap (most replayed) data.

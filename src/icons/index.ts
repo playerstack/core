@@ -1,4 +1,4 @@
-export type { IconProps } from './types';
+export type { IconProps } from '../types/icons.types';
 
 // Desktop / shared icons
 export { default as PlayIcon } from './PlayIcon';

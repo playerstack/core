@@ -1,5 +1,5 @@
 import React from 'react';
-import type { IconProps } from './types';
+import type { IconProps } from '../types/icons.types';
 
 const ArrowLeftIcon: React.FC<IconProps> = ({ width = 36, height = 36 }) => (
   <svg viewBox="0 0 24 24" width={width} height={height} fill="currentColor">
