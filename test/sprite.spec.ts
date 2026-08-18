@@ -1,4 +1,4 @@
-import { computeSpriteFrame, SpriteCue } from '../src/sprite';
+import { computeSpriteFrame, SpriteCue } from '@sprite';
 
 describe('computeSpriteFrame', () => {
   const cues: SpriteCue[] = [

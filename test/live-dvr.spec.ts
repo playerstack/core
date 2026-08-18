@@ -1,4 +1,4 @@
-import { computeLiveDVRState, sliderPositionToTime, formatLiveOffset } from '../src/live-dvr';
+import { computeLiveDVRState, sliderPositionToTime, formatLiveOffset } from '@live-dvr';
 
 function createMockElement(seekableRanges: [number, number][], currentTime: number): HTMLMediaElement {
   const seekable = {

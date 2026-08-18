@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import { renderHook, act } from '@testing-library/react';
-import { createPlayerContext } from '../../src/hooks/context/createPlayerContext';
+import { createPlayerContext } from '@hooks/context/createPlayerContext';
 
 describe('createPlayerContext', () => {
   const actionTypes = ['i18n', 'menuVisible', 'videoRef', 'playerRef'];

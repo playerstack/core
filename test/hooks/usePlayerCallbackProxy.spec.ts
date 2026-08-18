@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import { renderHook, act } from '@testing-library/react';
-import { usePlayerCallbackProxy } from '../../src/hooks/usePlayerCallbackProxy';
+import { usePlayerCallbackProxy } from '@hooks/usePlayerCallbackProxy';
 
 describe('usePlayerCallbackProxy', () => {
   const baseParams = {

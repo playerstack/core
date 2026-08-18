@@ -1,5 +1,5 @@
 import React from 'react';
-import type { IconProps } from '../../types/icons.types';
+import type { IconProps } from '@typings/icons.types';
 
 const MobileSpeedIcon: React.FC<IconProps> = ({ width = '100%', height = '100%' }) => (
   <svg viewBox="0 0 36 36" width={width} height={height}>

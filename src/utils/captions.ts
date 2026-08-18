@@ -1,6 +1,6 @@
-import type { VTTCue, CaptionStyleOptions } from '../types/utils/captions.types';
+import type { VTTCue, CaptionStyleOptions } from '@typings/utils/captions.types';
 
-export type { VTTCue, CaptionStyleOptions } from '../types/utils/captions.types';
+export type { VTTCue, CaptionStyleOptions } from '@typings/utils/captions.types';
 
 /**
  * Default caption style options.

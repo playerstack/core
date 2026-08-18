@@ -1,4 +1,4 @@
-import { parseSpriteVTT, timeCodeToSeconds } from '../src/utils/vtt-sprite';
+import { parseSpriteVTT, timeCodeToSeconds } from '@utils/vtt-sprite';
 
 describe('timeCodeToSeconds', () => {
   test('parses simple seconds', () => {

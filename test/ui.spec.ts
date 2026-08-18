@@ -1,4 +1,4 @@
-import { buildIconProps, sliderWidth, buildSettingsLabel, buildSettingsOptions } from '../src/ui';
+import { buildIconProps, sliderWidth, buildSettingsLabel, buildSettingsOptions } from '@ui';
 
 describe('buildIconProps', () => {
   test('returns 36x36 for non-fullscreen', () => {

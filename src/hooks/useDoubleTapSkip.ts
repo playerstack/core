@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { UseDoubleTapSkipParams, SkipState, UseDoubleTapSkipReturn } from '../types/hooks/useDoubleTapSkip.types';
+import type { UseDoubleTapSkipParams, SkipState, UseDoubleTapSkipReturn } from '@typings/hooks/useDoubleTapSkip.types';
 
-export type { UseDoubleTapSkipParams, SkipState, UseDoubleTapSkipReturn } from '../types/hooks/useDoubleTapSkip.types';
+export type { UseDoubleTapSkipParams, SkipState, UseDoubleTapSkipReturn } from '@typings/hooks/useDoubleTapSkip.types';
 
 const DEFAULT_SKIP_SECONDS = 10;
 const DEFAULT_DOUBLE_TAP_DELAY = 300;

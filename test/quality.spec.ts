@@ -1,4 +1,4 @@
-import { getRecommendedVideoQuality, measureNetworkSpeed, VIDEO_QUALITY_THRESHOLDS } from '../src/quality';
+import { getRecommendedVideoQuality, measureNetworkSpeed, VIDEO_QUALITY_THRESHOLDS } from '@quality';
 
 // Mock fetch and performance for measureNetworkSpeed
 const mockFetch = jest.fn();
@@ -12,7 +12,7 @@ jest.mock('../src/utils/cookie', () => ({
   setCookie: jest.fn(),
 }));
 
-import { getCookie, setCookie } from '../src/utils/cookie';
+import { getCookie, setCookie } from '@utils/cookie';
 const mockedGetCookie = getCookie as jest.Mock;
 const mockedSetCookie = setCookie as jest.Mock;
 

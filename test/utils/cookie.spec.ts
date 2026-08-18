@@ -1,4 +1,4 @@
-import { getCookie, setCookie, deleteCookie } from '../../src/utils/cookie';
+import { getCookie, setCookie, deleteCookie } from '@utils/cookie';
 
 describe('cookie utils', () => {
   beforeEach(() => {

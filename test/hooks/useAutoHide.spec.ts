@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import { renderHook, act } from '@testing-library/react';
-import { useAutoHide } from '../../src/hooks/useAutoHide';
+import { useAutoHide } from '@hooks/useAutoHide';
 
 describe('useAutoHide', () => {
   beforeEach(() => {

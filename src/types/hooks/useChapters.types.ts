@@ -1,4 +1,4 @@
-import type { ChapterInput, ChapterSegment } from '../chapters.types';
+import type { ChapterInput, ChapterSegment } from '@typings/chapters.types';
 
 export interface UseChaptersParams {
   chapters: ChapterInput[] | null | undefined;

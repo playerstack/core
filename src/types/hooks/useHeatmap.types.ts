@@ -1,4 +1,4 @@
-import type { HeatmapDataPoint } from '../heatmap.types';
+import type { HeatmapDataPoint } from '@typings/heatmap.types';
 
 export interface UseHeatmapParams {
   heatmapData: HeatmapDataPoint[] | null | undefined;

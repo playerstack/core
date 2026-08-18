@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import React from 'react';
-import { mergeRefs } from '../../src/hooks/utils/mergeRefs';
+import { mergeRefs } from '@hooks/utils/mergeRefs';
 
 describe('mergeRefs', () => {
   it('calls callback refs with the value', () => {

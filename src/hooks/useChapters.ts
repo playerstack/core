@@ -1,9 +1,9 @@
 import { useMemo, useCallback } from 'react';
-import { computeChapterSegments, getChapterAtTime as coreGetChapterAtTime } from '../chapters';
-import { useDeepCompareMemoize } from './useDeepCompareMemoize';
-import type { UseChaptersParams, UseChaptersReturn } from '../types/hooks/useChapters.types';
+import { computeChapterSegments, getChapterAtTime as coreGetChapterAtTime } from '@chapters';
+import { useDeepCompareMemoize } from '@hooks/useDeepCompareMemoize';
+import type { UseChaptersParams, UseChaptersReturn } from '@typings/hooks/useChapters.types';
 
-export type { UseChaptersParams, UseChaptersReturn } from '../types/hooks/useChapters.types';
+export type { UseChaptersParams, UseChaptersReturn } from '@typings/hooks/useChapters.types';
 
 /**
  * Hook that processes chapter definitions and provides chapter-related

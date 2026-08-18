@@ -2,8 +2,8 @@
  * @jest-environment jsdom
  */
 import { renderHook, act } from '@testing-library/react';
-import { useVolume } from '../../src/hooks/useVolume';
-import type { VolumeAdapter } from '../../src/types/adapters.types';
+import { useVolume } from '@hooks/useVolume';
+import type { VolumeAdapter } from '@typings/adapters.types';
 
 function createMockAdapter(initial: { volume?: number; muted?: boolean } = {}): VolumeAdapter & {
   _listeners: Set<(volume: number, muted: boolean) => void>;

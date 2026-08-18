@@ -1,5 +1,5 @@
 import React from 'react';
-import { lazy } from '../../src/hooks/utils/lazy';
+import { lazy } from '@hooks/utils/lazy';
 
 const DummyComponent: React.FC<{ text?: string }> = ({ text = 'Hello' }) => {
   return React.createElement('div', null, text);

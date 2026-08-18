@@ -1,4 +1,4 @@
-import { EventEmitter } from '../src/event-emitter';
+import { EventEmitter } from '@event-emitter';
 
 type TestEvents = {
   hello: (name: string) => void;

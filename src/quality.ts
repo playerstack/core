@@ -1,4 +1,4 @@
-import { getCookie, setCookie } from './utils/cookie';
+import { getCookie, setCookie } from '@utils/cookie';
 
 /**
  * Quality/speed threshold mapping for adaptive quality selection.

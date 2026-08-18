@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { sliderPositionToTime, formatLiveOffset } from '../live-dvr';
-import type { LiveDVRState } from '../types/live-dvr.types';
-import type { DVRAdapter } from '../types/adapters.types';
-import type { UseLiveDVRParams, UseLiveDVRReturn } from '../types/hooks/useLiveDVR.types';
+import { sliderPositionToTime, formatLiveOffset } from '@live-dvr';
+import type { LiveDVRState } from '@typings/live-dvr.types';
+import type { DVRAdapter } from '@typings/adapters.types';
+import type { UseLiveDVRParams, UseLiveDVRReturn } from '@typings/hooks/useLiveDVR.types';
 
-export type { UseLiveDVRParams, UseLiveDVRReturn } from '../types/hooks/useLiveDVR.types';
+export type { UseLiveDVRParams, UseLiveDVRReturn } from '@typings/hooks/useLiveDVR.types';
 
 /** Default DVR configuration. */
 const DVR_CONFIG = {

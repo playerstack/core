@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import { renderHook } from '@testing-library/react';
-import { useDeepCompareMemoize } from '../../src/hooks/useDeepCompareMemoize';
+import { useDeepCompareMemoize } from '@hooks/useDeepCompareMemoize';
 
 describe('useDeepCompareMemoize', () => {
   it('returns same reference when content is deeply equal (object)', () => {

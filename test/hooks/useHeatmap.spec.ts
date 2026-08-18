@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import { renderHook } from '@testing-library/react';
-import { useHeatmap } from '../../src/hooks/useHeatmap';
+import { useHeatmap } from '@hooks/useHeatmap';
 
 describe('useHeatmap', () => {
   describe('returns empty path and hasHeatmap=false for null/undefined data', () => {

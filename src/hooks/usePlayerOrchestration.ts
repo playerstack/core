@@ -2,13 +2,13 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import type {
   UsePlayerOrchestrationParams,
   UsePlayerOrchestrationReturn,
-} from '../types/hooks/usePlayerOrchestration.types';
+} from '@typings/hooks/usePlayerOrchestration.types';
 
 export type {
   QualitySwitchConfig,
   UsePlayerOrchestrationParams,
   UsePlayerOrchestrationReturn,
-} from '../types/hooks/usePlayerOrchestration.types';
+} from '@typings/hooks/usePlayerOrchestration.types';
 
 // ---------- Constants ----------
 

@@ -1,4 +1,4 @@
-import { isMediaStream, isBlobUrl } from './utils/media';
+import { isMediaStream, isBlobUrl } from '@utils/media';
 
 /**
  * File extension patterns for detecting media format.

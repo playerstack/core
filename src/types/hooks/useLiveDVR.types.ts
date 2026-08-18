@@ -1,5 +1,5 @@
-import type { LiveDVRState } from '../live-dvr.types';
-import type { DVRAdapter } from '../adapters.types';
+import type { LiveDVRState } from '@typings/live-dvr.types';
+import type { DVRAdapter } from '@typings/adapters.types';
 
 export interface UseLiveDVRParams {
   /** Platform adapter for DVR operations (null when unavailable). */

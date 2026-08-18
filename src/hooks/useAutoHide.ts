@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
-import type { UseAutoHideParams, UseAutoHideReturn } from '../types/hooks/useAutoHide.types';
+import type { UseAutoHideParams, UseAutoHideReturn } from '@typings/hooks/useAutoHide.types';
 
-export type { UseAutoHideParams, UseAutoHideReturn } from '../types/hooks/useAutoHide.types';
+export type { UseAutoHideParams, UseAutoHideReturn } from '@typings/hooks/useAutoHide.types';
 
 const DEFAULT_HIDE_DELAY = 3000;
 

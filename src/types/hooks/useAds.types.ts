@@ -1,4 +1,4 @@
-import type { AdsPlatform, AdsConfig } from '../adapters.types';
+import type { AdsPlatform, AdsConfig } from '@typings/adapters.types';
 
 export interface UseAdsParams {
   ads: AdsConfig | null | undefined;

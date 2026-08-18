@@ -1,4 +1,4 @@
-import { canPlay, isAudioUrl, VIDEO_EXTENSIONS, AUDIO_EXTENSIONS, HLS_EXTENSIONS, DASH_EXTENSIONS, FLV_EXTENSIONS } from '../src/patterns';
+import { canPlay, isAudioUrl, VIDEO_EXTENSIONS, AUDIO_EXTENSIONS, HLS_EXTENSIONS, DASH_EXTENSIONS, FLV_EXTENSIONS } from '@patterns';
 
 describe('isAudioUrl', () => {
   test('returns true for mp3', () => {

@@ -1,4 +1,4 @@
-import { MediaEngine } from '../src/media-engine';
+import { MediaEngine } from '@media-engine';
 
 // Mock getSDK to control SDK loading
 jest.mock('../src/utils/sdk', () => ({
@@ -6,7 +6,7 @@ jest.mock('../src/utils/sdk', () => ({
   getSDK: jest.fn(),
 }));
 
-import { getSDK } from '../src/utils/sdk';
+import { getSDK } from '@utils/sdk';
 
 const mockedGetSDK = getSDK as jest.MockedFunction<typeof getSDK>;
 

@@ -1,6 +1,6 @@
-import type { ChapterInput, ChapterSegment } from './types/chapters.types';
+import type { ChapterInput, ChapterSegment } from '@typings/chapters.types';
 
-export type { ChapterInput, ChapterSegment } from './types/chapters.types';
+export type { ChapterInput, ChapterSegment } from '@typings/chapters.types';
 
 /**
  * Compute chapter segments from raw chapter definitions and total duration.

@@ -5,7 +5,7 @@ import {
   getEdgeStyleCSS,
   DEFAULT_CAPTION_STYLE,
   CAPTION_STYLE_OPTIONS,
-} from '../../src/utils/captions';
+} from '@utils/captions';
 
 describe('parseVTTCaptions', () => {
   it('parses a standard VTT string with multiple cues', () => {

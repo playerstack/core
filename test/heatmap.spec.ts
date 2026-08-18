@@ -1,4 +1,4 @@
-import { generateHeatmapPath } from '../src/heatmap';
+import { generateHeatmapPath } from '@heatmap';
 
 describe('generateHeatmapPath', () => {
   test('returns empty string for null data', () => {

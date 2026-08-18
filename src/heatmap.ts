@@ -1,6 +1,6 @@
-import type { HeatmapDataPoint } from './types/heatmap.types';
+import type { HeatmapDataPoint } from '@typings/heatmap.types';
 
-export type { HeatmapDataPoint } from './types/heatmap.types';
+export type { HeatmapDataPoint } from '@typings/heatmap.types';
 
 /**
  * Generate a smooth SVG stroke path from heatmap (most replayed) data.

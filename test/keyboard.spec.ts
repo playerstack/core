@@ -1,4 +1,4 @@
-import { eventsKeyCodes, keyMappings } from '../src/keyboard';
+import { eventsKeyCodes, keyMappings } from '@keyboard';
 
 describe('eventsKeyCodes', () => {
   test('maps space keycode to SPACE_KEY', () => {

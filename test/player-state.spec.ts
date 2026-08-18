@@ -1,4 +1,4 @@
-import { playerStateInitial, reduceSeekState } from '../src/player-state';
+import { playerStateInitial, reduceSeekState } from '@player-state';
 
 describe('playerStateInitial', () => {
   test('has expected default values', () => {
