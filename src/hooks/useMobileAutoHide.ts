@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { UseMobileAutoHideParams, UseMobileAutoHideReturn } from '../types/hooks/useMobileAutoHide.types';
+import type { UseMobileAutoHideParams, UseMobileAutoHideReturn } from '@typings/hooks/useMobileAutoHide.types';
 
-export type { UseMobileAutoHideParams, UseMobileAutoHideReturn } from '../types/hooks/useMobileAutoHide.types';
+export type { UseMobileAutoHideParams, UseMobileAutoHideReturn } from '@typings/hooks/useMobileAutoHide.types';
 
 const DEFAULT_HIDE_DELAY = 3000;
 

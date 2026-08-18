@@ -1,7 +1,7 @@
-import { EventEmitter } from './event-emitter';
-import { getSDK } from './utils/sdk';
-import { isMediaStream, hasAudio, supportsWebKitPresentationMode } from './utils/media';
-import { HLS_EXTENSIONS, DASH_EXTENSIONS, FLV_EXTENSIONS } from './patterns';
+import { EventEmitter } from '@event-emitter';
+import { getSDK } from '@utils/sdk';
+import { isMediaStream, hasAudio, supportsWebKitPresentationMode } from '@utils/media';
+import { HLS_EXTENSIONS, DASH_EXTENSIONS, FLV_EXTENSIONS } from '@patterns';
 import {
   IS_IOS,
   IS_SAFARI,
@@ -14,8 +14,8 @@ import {
   DEFAULT_HLS_VERSION,
   DEFAULT_DASH_VERSION,
   DEFAULT_FLV_VERSION,
-} from './constants';
-import type { MediaEngineConfig, MediaEngineEvents, MediaState } from './types/media.types';
+} from '@constants';
+import type { MediaEngineConfig, MediaEngineEvents, MediaState } from '@typings/media.types';
 
 /**
  * Framework-agnostic media engine.

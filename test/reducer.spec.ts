@@ -1,4 +1,4 @@
-import { createTypedReducer } from '../src/reducer';
+import { createTypedReducer } from '@reducer';
 
 describe('createTypedReducer', () => {
   const validTypes = ['volume', 'playing', 'muted'] as const;

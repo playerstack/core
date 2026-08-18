@@ -16,9 +16,9 @@
  * @see https://developer.mozilla.org/en-US/docs/Web/API/MediaSource/setLiveSeekableRange
  */
 
-import type { LiveDVRState, LiveDVRConfig } from './types/live-dvr.types';
+import type { LiveDVRState, LiveDVRConfig } from '@typings/live-dvr.types';
 
-export type { LiveDVRState, LiveDVRConfig } from './types/live-dvr.types';
+export type { LiveDVRState, LiveDVRConfig } from '@typings/live-dvr.types';
 
 const DEFAULT_CONFIG: Required<LiveDVRConfig> = {
   minDVRWindow: 15,

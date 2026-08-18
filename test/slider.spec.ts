@@ -5,7 +5,7 @@ import {
   getTrackTranslateX,
   getMouseTranslateX,
   getVolumePercentage,
-} from '../src/slider';
+} from '@slider';
 
 describe('getEventXCoordinate', () => {
   test('returns clientX from mouse event', () => {

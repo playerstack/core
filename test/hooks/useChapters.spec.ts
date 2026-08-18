@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import { renderHook } from '@testing-library/react';
-import { useChapters } from '../../src/hooks/useChapters';
+import { useChapters } from '@hooks/useChapters';
 
 describe('useChapters', () => {
   const sampleChapters = [

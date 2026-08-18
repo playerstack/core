@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import { renderHook, act } from '@testing-library/react';
-import { useMobileAutoHide } from '../../src/hooks/useMobileAutoHide';
+import { useMobileAutoHide } from '@hooks/useMobileAutoHide';
 
 describe('useMobileAutoHide', () => {
   beforeEach(() => {

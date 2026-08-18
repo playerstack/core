@@ -7,6 +7,7 @@ module.exports = {
       clearMocks: true,
       testMatch: ['<rootDir>/test/hooks/**/*.spec.ts'],
       moduleFileExtensions: ['ts', 'js'],
+      resolver: '<rootDir>/jest.resolver.js',
     },
     {
       displayName: 'main',
@@ -22,6 +23,7 @@ module.exports = {
       testMatch: ['<rootDir>/test/**/*.spec.ts'],
       testPathIgnorePatterns: ['<rootDir>/test/hooks/'],
       moduleFileExtensions: ['ts', 'js'],
+      resolver: '<rootDir>/jest.resolver.js',
     },
   ],
 };

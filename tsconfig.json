@@ -19,6 +19,8 @@
     "rootDir": "src",
     "baseUrl": ".",
     "paths": {
+      "@*": ["./src/*"],
+      "@typings/*": ["./src/types/*"],
       "@playerstack/core": ["./src/index.ts"],
       "@playerstack/core/*": ["./src/*"]
     }

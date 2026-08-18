@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
-import type { UseVolumeParams, UseVolumeReturn } from '../types/hooks/useVolume.types';
+import type { UseVolumeParams, UseVolumeReturn } from '@typings/hooks/useVolume.types';
 
-export type { UseVolumeParams, UseVolumeReturn } from '../types/hooks/useVolume.types';
+export type { UseVolumeParams, UseVolumeReturn } from '@typings/hooks/useVolume.types';
 
 /**
  * Platform-agnostic volume management hook.

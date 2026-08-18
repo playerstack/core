@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
-import { generateHeatmapPath } from '../heatmap';
-import { useDeepCompareMemoize } from './useDeepCompareMemoize';
-import type { UseHeatmapParams, UseHeatmapReturn } from '../types/hooks/useHeatmap.types';
+import { generateHeatmapPath } from '@heatmap';
+import { useDeepCompareMemoize } from '@hooks/useDeepCompareMemoize';
+import type { UseHeatmapParams, UseHeatmapReturn } from '@typings/hooks/useHeatmap.types';
 
-export type { UseHeatmapParams, UseHeatmapReturn } from '../types/hooks/useHeatmap.types';
+export type { UseHeatmapParams, UseHeatmapReturn } from '@typings/hooks/useHeatmap.types';
 
 /**
  * Hook that processes raw heatmap data (most replayed / view intensity)

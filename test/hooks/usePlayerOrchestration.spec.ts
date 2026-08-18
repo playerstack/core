@@ -2,8 +2,8 @@
  * @jest-environment jsdom
  */
 import { renderHook, act } from '@testing-library/react';
-import { usePlayerOrchestration } from '../../src/hooks/usePlayerOrchestration';
-import type { PlayerAdapter } from '../../src/types/adapters.types';
+import { usePlayerOrchestration } from '@hooks/usePlayerOrchestration';
+import type { PlayerAdapter } from '@typings/adapters.types';
 
 // ---------- Mock adapter factory ----------
 

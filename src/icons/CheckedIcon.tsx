@@ -1,5 +1,5 @@
 import React from 'react';
-import type { IconProps } from '../types/icons.types';
+import type { IconProps } from '@typings/icons.types';
 
 const CheckedIcon: React.FC<IconProps> = ({ width = 36, height = 36 }) => (
   <svg viewBox="0 0 36 36" width={width} height={height} fill="currentColor" xmlns="http://www.w3.org/2000/svg">

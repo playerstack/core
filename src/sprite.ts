@@ -3,9 +3,9 @@
  * Computes cover-scale geometry for a sprite frame within a container.
  */
 
-import type { SpriteCue, ComputedSpriteFrame } from './types/sprite.types';
+import type { SpriteCue, ComputedSpriteFrame } from '@typings/sprite.types';
 
-export type { SpriteCue, ComputedSpriteFrame } from './types/sprite.types';
+export type { SpriteCue, ComputedSpriteFrame } from '@typings/sprite.types';
 
 /**
  * Find the matching sprite cue for a given seek time and compute cover-scale

@@ -1,4 +1,4 @@
-import { MediaEngine } from '../src/media-engine';
+import { MediaEngine } from '@media-engine';
 
 describe('MediaEngine', () => {
   let video: HTMLVideoElement;

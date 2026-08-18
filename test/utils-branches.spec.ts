@@ -1,9 +1,9 @@
 /**
  * Tests for uncovered branches in utils (cookie, device, env).
  */
-import { getCookie, setCookie, deleteCookie } from '../src/utils/cookie';
-import { isDesktop, isMobile } from '../src/utils/device';
-import { isTestEnv } from '../src/utils/env';
+import { getCookie, setCookie, deleteCookie } from '@utils/cookie';
+import { isDesktop, isMobile } from '@utils/device';
+import { isTestEnv } from '@utils/env';
 
 describe('cookie utils', () => {
   test('getCookie returns null when cookie not found', () => {

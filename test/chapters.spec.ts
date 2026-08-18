@@ -1,4 +1,4 @@
-import { computeChapterSegments, getChapterAtTime, ChapterSegment } from '../src/chapters';
+import { computeChapterSegments, getChapterAtTime, ChapterSegment } from '@chapters';
 
 describe('computeChapterSegments', () => {
   test('returns empty array for null chapters', () => {

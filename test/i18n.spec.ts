@@ -1,4 +1,4 @@
-import { getTranslations, en, es } from '../src/i18n/index';
+import { getTranslations, en, es } from '@i18n/index';
 
 describe('i18n', () => {
   it('returns English translations by default', () => {

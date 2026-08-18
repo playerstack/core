@@ -1,4 +1,4 @@
-import { isMediaStream, isBlobUrl, hasAudio, supportsWebKitPresentationMode } from '../../src/utils/media';
+import { isMediaStream, isBlobUrl, hasAudio, supportsWebKitPresentationMode } from '@utils/media';
 
 // MediaStream not available in jsdom, mock it
 class MockMediaStream {}

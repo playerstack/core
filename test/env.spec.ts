@@ -1,4 +1,4 @@
-import { enableStubOn } from '../src/utils/env';
+import { enableStubOn } from '@utils/env';
 
 describe('enableStubOn', () => {
   test('returns original function in non-test environment', () => {

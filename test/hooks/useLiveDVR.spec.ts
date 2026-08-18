@@ -2,8 +2,8 @@
  * @jest-environment jsdom
  */
 import { renderHook, act } from '@testing-library/react';
-import { useLiveDVR } from '../../src/hooks/useLiveDVR';
-import type { DVRAdapter } from '../../src/types/adapters.types';
+import { useLiveDVR } from '@hooks/useLiveDVR';
+import type { DVRAdapter } from '@typings/adapters.types';
 
 function createMockAdapter(options: {
   seekableRange?: { start: number; end: number } | null;

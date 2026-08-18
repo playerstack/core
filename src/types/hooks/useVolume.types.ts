@@ -1,4 +1,4 @@
-import type { VolumeAdapter } from '../adapters.types';
+import type { VolumeAdapter } from '@typings/adapters.types';
 
 export interface UseVolumeParams {
   adapter: VolumeAdapter;

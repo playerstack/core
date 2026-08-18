@@ -1,17 +1,17 @@
 import React from 'react';
-import { createTypedReducer } from '../../reducer';
-import { getTranslations as defaultGetTranslations } from '../../i18n/index';
+import { createTypedReducer } from '@reducer';
+import { getTranslations as defaultGetTranslations } from '@i18n/index';
 import type {
   CreatePlayerContextOptions,
   PlayerContextResult,
   ProviderProps,
-} from '../../types/hooks/context/createPlayerContext.types';
+} from '@typings/hooks/context/createPlayerContext.types';
 
 export type {
   CreatePlayerContextOptions,
   PlayerContextResult,
   ProviderProps,
-} from '../../types/hooks/context/createPlayerContext.types';
+} from '@typings/hooks/context/createPlayerContext.types';
 
 /**
  * Factory that creates a typed player context with reducer, Provider, and hooks.

@@ -1,10 +1,10 @@
 // Core
-export { MediaEngine } from './media-engine';
-export { EventEmitter } from './event-emitter';
+export { MediaEngine } from '@media-engine';
+export { EventEmitter } from '@event-emitter';
 
 // Live DVR
-export { computeLiveDVRState, sliderPositionToTime, formatLiveOffset } from './live-dvr';
-export type { LiveDVRState, LiveDVRConfig } from './types/live-dvr.types';
+export { computeLiveDVRState, sliderPositionToTime, formatLiveOffset } from '@live-dvr';
+export type { LiveDVRState, LiveDVRConfig } from '@typings/live-dvr.types';
 
 // Patterns
 export {
@@ -15,7 +15,7 @@ export {
   HLS_EXTENSIONS,
   DASH_EXTENSIONS,
   FLV_EXTENSIONS,
-} from './patterns';
+} from '@patterns';
 
 // Constants
 export {
@@ -34,7 +34,7 @@ export {
   DEFAULT_FLV_VERSION,
   DEFAULT_PROGRESS_INTERVAL,
   defaultMediaConfig,
-} from './constants';
+} from '@constants';
 
 // Utils (re-export for convenience)
 export {
@@ -62,36 +62,36 @@ export {
   CAPTION_STYLE_OPTIONS,
   parseSpriteVTT,
   timeCodeToSeconds,
-} from './utils/index';
+} from '@utils/index';
 
-export type { VTTCue, CaptionStyleOptions } from './types/utils/captions.types';
-export type { VttSpriteCue, SpriteFrame } from './utils/vtt-sprite';
+export type { VTTCue, CaptionStyleOptions } from '@typings/utils/captions.types';
+export type { VttSpriteCue, SpriteFrame } from '@utils/vtt-sprite';
 
 // Sprite Frame Computation
-export { computeSpriteFrame } from './sprite';
-export type { SpriteCue, ComputedSpriteFrame } from './types/sprite.types';
+export { computeSpriteFrame } from '@sprite';
+export type { SpriteCue, ComputedSpriteFrame } from '@typings/sprite.types';
 
 // Player State
-export { playerStateInitial, audioPlayerStateInitial, reduceSeekState } from './player-state';
-export type { PlayerState, AudioPlayerState } from './player-state';
+export { playerStateInitial, audioPlayerStateInitial, reduceSeekState } from '@player-state';
+export type { PlayerState, AudioPlayerState } from '@player-state';
 
 // Keyboard
-export { eventsKeyCodes, keyMappings } from './keyboard';
+export { eventsKeyCodes, keyMappings } from '@keyboard';
 
 // Chapters
-export { computeChapterSegments, getChapterAtTime } from './chapters';
-export type { ChapterInput, ChapterSegment } from './types/chapters.types';
+export { computeChapterSegments, getChapterAtTime } from '@chapters';
+export type { ChapterInput, ChapterSegment } from '@typings/chapters.types';
 
 // Heatmap
-export { generateHeatmapPath } from './heatmap';
-export type { HeatmapDataPoint } from './types/heatmap.types';
+export { generateHeatmapPath } from '@heatmap';
+export type { HeatmapDataPoint } from '@typings/heatmap.types';
 
 // UI Sizing
-export { buildIconProps, sliderWidth, buildSettingsLabel, buildSettingsOptions, settingsInitialState } from './ui';
-export type { SettingsOption } from './types/ui.types';
+export { buildIconProps, sliderWidth, buildSettingsLabel, buildSettingsOptions, settingsInitialState } from '@ui';
+export type { SettingsOption } from '@typings/ui.types';
 
 // Reducer
-export { createTypedReducer } from './reducer';
+export { createTypedReducer } from '@reducer';
 
 // Slider Math
 export {
@@ -101,17 +101,17 @@ export {
   getTrackTranslateX,
   getMouseTranslateX,
   getVolumePercentage,
-} from './slider';
+} from '@slider';
 
 // Quality Selection
-export { VIDEO_QUALITY_THRESHOLDS, measureNetworkSpeed, getRecommendedVideoQuality } from './quality';
+export { VIDEO_QUALITY_THRESHOLDS, measureNetworkSpeed, getRecommendedVideoQuality } from '@quality';
 
 // i18n
-export { getTranslations, en, es } from './i18n/index';
-export type { Translations, SupportedLanguage } from './i18n/index';
+export { getTranslations, en, es } from '@i18n/index';
+export type { Translations, SupportedLanguage } from '@i18n/index';
 
 // Adapters
-export type { AdsPlatform, AdsConfig, VolumeAdapter, DVRAdapter, PlayerAdapter } from './types/adapters.types';
+export type { AdsPlatform, AdsConfig, VolumeAdapter, DVRAdapter, PlayerAdapter } from '@typings/adapters.types';
 
 // Types
 export type {
@@ -121,4 +121,4 @@ export type {
   MediaEngineEvents,
   MediaState,
   MediaEventHandler,
-} from './types/media.types';
+} from '@typings/media.types';

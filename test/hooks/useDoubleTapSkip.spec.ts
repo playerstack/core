@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import { renderHook, act } from '@testing-library/react';
-import { useDoubleTapSkip } from '../../src/hooks/useDoubleTapSkip';
+import { useDoubleTapSkip } from '@hooks/useDoubleTapSkip';
 
 describe('useDoubleTapSkip', () => {
   beforeEach(() => {

@@ -1,4 +1,4 @@
-import { getGlobal, getSDK } from '../../src/utils/sdk';
+import { getGlobal, getSDK } from '@utils/sdk';
 
 describe('getGlobal', () => {
   beforeEach(() => {

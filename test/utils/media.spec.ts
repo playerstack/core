@@ -1,4 +1,4 @@
-import { isBlobUrl } from '../../src/utils/media';
+import { isBlobUrl } from '@utils/media';
 
 describe('media utils', () => {
   describe('isBlobUrl', () => {

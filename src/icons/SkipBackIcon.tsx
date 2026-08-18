@@ -1,5 +1,5 @@
 import React from 'react';
-import type { IconProps } from '../types/icons.types';
+import type { IconProps } from '@typings/icons.types';
 
 /**
  * Seek backward 10 seconds icon.

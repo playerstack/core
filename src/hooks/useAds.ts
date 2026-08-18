@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { UseAdsParams, UseAdsReturn } from '../types/hooks/useAds.types';
+import type { UseAdsParams, UseAdsReturn } from '@typings/hooks/useAds.types';
 
-export type { UseAdsParams, UseAdsReturn } from '../types/hooks/useAds.types';
+export type { UseAdsParams, UseAdsReturn } from '@typings/hooks/useAds.types';
 
 /**
  * Hook to manage ads overlay state.

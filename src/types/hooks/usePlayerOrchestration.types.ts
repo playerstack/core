@@ -1,4 +1,4 @@
-import type { PlayerAdapter } from '../adapters.types';
+import type { PlayerAdapter } from '@typings/adapters.types';
 
 export interface QualitySwitchConfig {
   enabled: boolean;

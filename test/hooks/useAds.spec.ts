@@ -2,8 +2,8 @@
  * @jest-environment jsdom
  */
 import { renderHook, act } from '@testing-library/react';
-import { useAds } from '../../src/hooks/useAds';
-import type { AdsPlatform, AdsConfig } from '../../src/types/adapters.types';
+import { useAds } from '@hooks/useAds';
+import type { AdsPlatform, AdsConfig } from '@typings/adapters.types';
 
 describe('useAds', () => {
   const baseParams = {

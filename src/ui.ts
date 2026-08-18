@@ -3,9 +3,9 @@
  * Framework-agnostic — used by skin components for consistent sizing.
  */
 
-import type { SettingsOption } from './types/ui.types';
+import type { SettingsOption } from '@typings/ui.types';
 
-export type { SettingsOption } from './types/ui.types';
+export type { SettingsOption } from '@typings/ui.types';
 
 /**
  * Get icon dimensions based on fullscreen state.

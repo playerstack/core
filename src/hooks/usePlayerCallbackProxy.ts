@@ -2,12 +2,12 @@ import { useRef, useMemo } from 'react';
 import type {
   UsePlayerCallbackProxyParams,
   UsePlayerCallbackProxyReturn,
-} from '../types/hooks/usePlayerCallbackProxy.types';
+} from '@typings/hooks/usePlayerCallbackProxy.types';
 
 export type {
   UsePlayerCallbackProxyParams,
   UsePlayerCallbackProxyReturn,
-} from '../types/hooks/usePlayerCallbackProxy.types';
+} from '@typings/hooks/usePlayerCallbackProxy.types';
 
 // ---------- Defaults ----------
 

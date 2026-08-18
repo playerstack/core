@@ -1,5 +1,5 @@
 import React from 'react';
-import type { IconProps } from '../../types/icons.types';
+import type { IconProps } from '@typings/icons.types';
 
 const MobileCloseIcon: React.FC<IconProps> = ({ width = 24, height = 24 }) => (
   <svg

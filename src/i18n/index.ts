@@ -1,5 +1,5 @@
-import en from './en';
-import es from './es';
+import en from '@i18n/en';
+import es from '@i18n/es';
 
 export type Translations = Record<string, string>;
 export type SupportedLanguage = 'en' | 'es';

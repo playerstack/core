@@ -1,4 +1,4 @@
-import { formatTime, indexBy, omit } from '../../src/utils/format';
+import { formatTime, indexBy, omit } from '@utils/format';
 
 describe('formatTime', () => {
   it('formats seconds under an hour as MM:SS', () => {
