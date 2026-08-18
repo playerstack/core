@@ -2,39 +2,87 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-function findFiles(dir, ext, results = []) {
-  const entries = fs.readdirSync(dir, { withFileTypes: true });
-  for (const entry of entries) {
-    const fullPath = path.join(dir, entry.name).replace(/\\/g, '/');
-    if (entry.isDirectory()) {
-      if (entry.name === 'declarations') continue; // skip .d.ts declarations folder
-      findFiles(fullPath, ext, results);
-    } else if (entry.name.endsWith(ext)) {
-      results.push(fullPath);
+const srcRoot = path.resolve(__dirname, '../src');
+const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../package.json'), 'utf8'));
+
+/**
+ * Derive entry points from package.json "exports" field.
+ * Each subpath export maps to a source file in src/.
+ *
+ * The "require" path tells us the output location (dist/cjs/<path>.js),
+ * from which we infer the source file (src/<path>.ts or src/<path>/index.ts).
+ */
+function getEntryPoints() {
+  const entries = {};
+
+  for (const [subpath, conditions] of Object.entries(pkg.exports)) {
+    // Use the CJS output path to derive the source entry
+    const cjsOut = conditions.require;
+    // Strip "dist/cjs/" prefix and ".js" suffix to get the relative src path
+    const relPath = cjsOut.replace('./dist/cjs/', '').replace('.js', '');
+
+    // Find the actual source file
+    const extensions = ['.ts', '.tsx'];
+    let srcFile = null;
+
+    for (const ext of extensions) {
+      const candidate = path.resolve(srcRoot, relPath + ext);
+      if (fs.existsSync(candidate)) {
+        srcFile = candidate;
+        break;
+      }
     }
+
+    // Try as directory with index
+    if (!srcFile) {
+      for (const ext of extensions) {
+        const candidate = path.resolve(srcRoot, relPath, 'index' + ext);
+        if (fs.existsSync(candidate)) {
+          srcFile = candidate;
+          break;
+        }
+      }
+    }
+
+    if (!srcFile) {
+      console.warn(`Warning: no source file found for export "${subpath}" (expected src/${relPath})`);
+      continue;
+    }
+
+    // Use the relative output path (without extension) as the entry key
+    // so esbuild writes to the correct location in outdir
+    entries[relPath] = srcFile;
   }
-  return results;
+
+  return entries;
 }
 
-// Esbuild plugin to resolve @alias imports to src/ relative paths
-function aliasPlugin(srcRoot) {
+/**
+ * Esbuild plugin: resolve @alias imports to absolute paths in src/.
+ * Only works with bundle:true (which is what we use).
+ */
+function aliasPlugin() {
   return {
     name: 'alias-resolve',
     setup(build) {
-      // Match any import starting with @ that is NOT a scoped npm package (@scope/pkg)
-      // Our aliases: @hooks/..., @types/..., @utils/..., @chapters, etc.
-      // Scoped npm: @playerstack/core, @testing-library/react
-      // Distinction: our aliases resolve to files in src/, npm scopes are in node_modules
-      build.onResolve({ filter: /^@(?!playerstack\/)/ }, (args) => {
-        // Strip leading @
-        const stripped = args.path.slice(1);
-        const candidate = path.resolve(srcRoot, stripped);
+      build.onResolve({ filter: /^@/ }, (args) => {
+        // Skip npm scoped packages
+        if (args.path.startsWith('@playerstack/')) return null;
+        let stripped = args.path.slice(1);
 
-        // Try exact file, then with extensions
+        // Map @typings/ to types/ directory
+        if (stripped.startsWith('typings/')) {
+          stripped = 'types/' + stripped.slice('typings/'.length);
+        }
+
+        const candidate = path.resolve(srcRoot, stripped);
         const extensions = ['.ts', '.tsx', '.js', '.jsx'];
+
+        // Try exact file
         if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
           return { path: candidate };
         }
+        // Try with extensions
         for (const ext of extensions) {
           if (fs.existsSync(candidate + ext)) {
             return { path: candidate + ext };
@@ -47,95 +95,60 @@ function aliasPlugin(srcRoot) {
             return { path: indexPath };
           }
         }
-        // Not our alias, let esbuild handle normally
+
+        // Not our alias — let esbuild handle
         return null;
       });
     },
   };
 }
 
-const srcRoot = path.resolve(__dirname, '../src');
+async function build() {
+  const esbuild = require('esbuild');
+  const entryPoints = getEntryPoints();
+  const entryCount = Object.keys(entryPoints).length;
 
-const tsFiles = findFiles('src', '.ts');
-const tsxFiles = findFiles('src', '.tsx');
-const srcFiles = [...tsFiles, ...tsxFiles];
-const entryPoints = srcFiles.join(' ');
+  console.log(`Building ${entryCount} entry points (bundle mode)...`);
 
-console.log(`Building ${srcFiles.length} files...`);
-
-// Write a temporary esbuild script that uses the plugin (since CLI can't use plugins)
-const buildScript = `
-const esbuild = require('esbuild');
-const path = require('path');
-const fs = require('fs');
-
-const srcRoot = path.resolve(__dirname, 'src');
-
-const aliasPlugin = {
-  name: 'alias-resolve',
-  setup(build) {
-    build.onResolve({ filter: /^@/ }, (args) => {
-      // Skip npm scoped packages
-      if (args.path.startsWith('@playerstack/')) return null;
-      let stripped = args.path.slice(1);
-      // Map @typings/ to types/ directory
-      if (stripped.startsWith('typings/')) {
-        stripped = 'types/' + stripped.slice('typings/'.length);
-      }
-      const candidate = path.resolve(srcRoot, stripped);
-      const extensions = ['.ts', '.tsx', '.js', '.jsx'];
-      if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
-        return { path: candidate };
-      }
-      for (const ext of extensions) {
-        if (fs.existsSync(candidate + ext)) {
-          return { path: candidate + ext };
-        }
-      }
-      for (const ext of extensions) {
-        const indexPath = path.join(candidate, 'index' + ext);
-        if (fs.existsSync(indexPath)) {
-          return { path: indexPath };
-        }
-      }
-      return null;
-    });
-  },
-};
-
-const entryPoints = ${JSON.stringify(srcFiles)};
-
-async function run() {
-  // ESM
+  // ESM — with splitting to share code between entry points
   await esbuild.build({
     entryPoints,
     outdir: 'dist/esm',
     format: 'esm',
     platform: 'browser',
     target: 'es2020',
+    bundle: true,
+    splitting: true,
     sourcemap: true,
-    plugins: [aliasPlugin],
+    packages: 'external',
+    plugins: [aliasPlugin()],
+    outExtension: { '.js': '.js' },
   });
 
-  // CJS
-  await esbuild.build({
-    entryPoints,
-    outdir: 'dist/cjs',
-    format: 'cjs',
-    platform: 'browser',
-    target: 'es2020',
-    sourcemap: true,
-    plugins: [aliasPlugin],
-  });
+  // CJS — no splitting (not supported), build each entry separately
+  // to avoid inlining shared code into every file
+  for (const [outPath, srcFile] of Object.entries(entryPoints)) {
+    await esbuild.build({
+      entryPoints: { [outPath]: srcFile },
+      outdir: 'dist/cjs',
+      format: 'cjs',
+      platform: 'browser',
+      target: 'es2020',
+      bundle: true,
+      sourcemap: true,
+      packages: 'external',
+      plugins: [aliasPlugin()],
+      outExtension: { '.js': '.js' },
+    });
+  }
+
+  console.log('esbuild done');
+
+  // Types
+  execSync('npx tsc --emitDeclarationOnly --outDir dist/types', { stdio: 'inherit' });
 }
 
-run().then(() => console.log('esbuild done')).catch((e) => { console.error(e); process.exit(1); });
-`;
-
-fs.writeFileSync(path.resolve(__dirname, '../_esbuild-run.js'), buildScript);
-execSync('node _esbuild-run.js', { stdio: 'inherit' });
-fs.unlinkSync(path.resolve(__dirname, '../_esbuild-run.js'));
-
-// Types
-execSync('npx tsc --emitDeclarationOnly --outDir dist/types', { stdio: 'inherit' });
-
+build().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});
