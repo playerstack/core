@@ -1,5 +1,5 @@
 import React from 'react';
-import type { IconProps } from '../types';
+import type { IconProps } from '../../types/icons.types';
 
 const MobilePauseIcon: React.FC<IconProps> = ({ width = '100%', height = '100%' }) => (
   <svg viewBox="0 0 56 56" preserveAspectRatio="xMidYMid meet" width={width} height={height} fill="none">

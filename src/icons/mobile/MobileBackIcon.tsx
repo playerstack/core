@@ -1,5 +1,5 @@
 import React from 'react';
-import type { IconProps } from '../types';
+import type { IconProps } from '../../types/icons.types';
 
 const MobileBackIcon: React.FC<IconProps> = ({ width = 24, height = 24 }) => (
   <svg viewBox="0 0 24 24" width={width} height={height} xmlns="http://www.w3.org/2000/svg">
