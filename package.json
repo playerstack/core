@@ -12,12 +12,6 @@
       "require": "./dist/cjs/index.js",
       "types": "./dist/types/index.d.ts"
     },
-    "./hooks": {
-      "react-native": "./dist/esm/hooks/index.js",
-      "import": "./dist/esm/hooks/index.js",
-      "require": "./dist/cjs/hooks/index.js",
-      "types": "./dist/types/hooks/index.d.ts"
-    },
     "./patterns": {
       "react-native": "./dist/esm/patterns.js",
       "import": "./dist/esm/patterns.js",
@@ -90,6 +84,42 @@
       "require": "./dist/cjs/media-engine.js",
       "types": "./dist/types/media-engine.d.ts"
     },
+    "./orchestrator": {
+      "react-native": "./dist/esm/player-orchestrator.js",
+      "import": "./dist/esm/player-orchestrator.js",
+      "require": "./dist/cjs/player-orchestrator.js",
+      "types": "./dist/types/player-orchestrator.d.ts"
+    },
+    "./ui-controller": {
+      "react-native": "./dist/esm/ui-controller.js",
+      "import": "./dist/esm/ui-controller.js",
+      "require": "./dist/cjs/ui-controller.js",
+      "types": "./dist/types/ui-controller.d.ts"
+    },
+    "./ads-controller": {
+      "react-native": "./dist/esm/ads-controller.js",
+      "import": "./dist/esm/ads-controller.js",
+      "require": "./dist/cjs/ads-controller.js",
+      "types": "./dist/types/ads-controller.d.ts"
+    },
+    "./volume-controller": {
+      "react-native": "./dist/esm/volume-controller.js",
+      "import": "./dist/esm/volume-controller.js",
+      "require": "./dist/cjs/volume-controller.js",
+      "types": "./dist/types/volume-controller.d.ts"
+    },
+    "./live-dvr-controller": {
+      "react-native": "./dist/esm/live-dvr-controller.js",
+      "import": "./dist/esm/live-dvr-controller.js",
+      "require": "./dist/cjs/live-dvr-controller.js",
+      "types": "./dist/types/live-dvr-controller.d.ts"
+    },
+    "./double-tap-controller": {
+      "react-native": "./dist/esm/double-tap-controller.js",
+      "import": "./dist/esm/double-tap-controller.js",
+      "require": "./dist/cjs/double-tap-controller.js",
+      "types": "./dist/types/double-tap-controller.d.ts"
+    },
     "./adapters": {
       "react-native": "./dist/esm/types/adapters.types.js",
       "import": "./dist/esm/types/adapters.types.js",
@@ -150,12 +180,6 @@
       "require": "./dist/cjs/utils/vtt-sprite.js",
       "types": "./dist/types/utils/vtt-sprite.d.ts"
     },
-    "./constants": {
-      "react-native": "./dist/esm/constants.js",
-      "import": "./dist/esm/constants.js",
-      "require": "./dist/cjs/constants.js",
-      "types": "./dist/types/constants.d.ts"
-    },
     "./icons": {
       "react-native": "./dist/esm/icons/index.js",
       "import": "./dist/esm/icons/index.js",
@@ -167,6 +191,12 @@
       "import": "./dist/esm/icons/mobile/index.js",
       "require": "./dist/cjs/icons/mobile/index.js",
       "types": "./dist/types/icons/mobile/index.d.ts"
+    },
+    "./constants": {
+      "react-native": "./dist/esm/constants.js",
+      "import": "./dist/esm/constants.js",
+      "require": "./dist/cjs/constants.js",
+      "types": "./dist/types/constants.d.ts"
     }
   },
   "files": [
@@ -177,10 +207,10 @@
     "clean": "rimraf dist coverage",
     "build": "node scripts/build.js",
     "build:types": "tsc --emitDeclarationOnly --outDir dist/types",
-    "lint": "eslint \"src/**/*.{ts,tsx}\"",
-    "lint:fix": "eslint \"src/**/*.{ts,tsx}\" --fix",
-    "format": "prettier --check \"src/**/*.{ts,tsx}\"",
-    "format:fix": "prettier --write \"src/**/*.{ts,tsx}\"",
+    "lint": "eslint \"src/**/*.ts\"",
+    "lint:fix": "eslint \"src/**/*.ts\" --fix",
+    "format": "prettier --check \"src/**/*.ts\"",
+    "format:fix": "prettier --write \"src/**/*.ts\"",
     "test": "jest --forceExit",
     "test:cov": "jest --coverage --forceExit",
     "preversion": "npm run lint && npm run test",
@@ -197,22 +227,11 @@
   },
   "homepage": "https://github.com/playerstack/core#readme",
   "dependencies": {
-    "load-script": "^1.0.0",
-    "react-fast-compare": "^3.2.2"
-  },
-  "peerDependencies": {
-    "react": "^18.3.1"
-  },
-  "peerDependenciesMeta": {
-    "react": {
-      "optional": true
-    }
+    "load-script": "^1.0.0"
   },
   "devDependencies": {
-    "@testing-library/react": "^16.3.2",
     "@types/jest": "^29.5.14",
     "@types/node": "^20.17.11",
-    "@types/react": "^18.3.31",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
     "esbuild": "^0.20.2",
@@ -223,7 +242,6 @@
     "jest-environment-jsdom": "^29.7.0",
     "jest-junit": "^16.0.0",
     "prettier": "^3.4.2",
-    "react-dom": "^18.3.1",
     "rimraf": "^3.0.2",
     "ts-jest": "^29.1.2",
     "typescript": "^5.4.0"

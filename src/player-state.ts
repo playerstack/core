@@ -7,6 +7,7 @@ export const playerStateInitial = {
   seek: 0,
   played: 0,
   loaded: 0,
+  bufferedRanges: [] as Array<{ start: number; end: number }>,
   duration: 0,
   isFullScreen: false,
   isEnded: false,

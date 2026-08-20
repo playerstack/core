@@ -60,6 +60,12 @@ export interface MediaEngineEvents {
   buffer: () => void;
   bufferEnd: () => void;
   seek: (currentTime: number) => void;
+  /**
+   * Fired when a live stream transitions to VOD (its playlist gained an end
+   * boundary — e.g. HLS `#EXT-X-ENDLIST`). After this the content behaves like a
+   * normal on-demand asset with a fixed duration.
+   */
+  liveEnded: () => void;
   error: (error: unknown, data?: unknown, instance?: unknown, sdk?: unknown) => void;
   playbackRateChange: (rate: number) => void;
   enablePiP: () => void;

@@ -21,31 +21,5 @@
     "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
     "no-console": ["warn", { "allow": ["warn", "error"] }],
     "prettier/prettier": ["error", { "endOfLine": "auto" }]
-  },
-  "overrides": [
-    {
-      "files": ["src/hooks/**/*.ts", "src/hooks/**/*.tsx"],
-      "rules": {
-        "no-restricted-globals": [
-          "error",
-          {
-            "name": "window",
-            "message": "Browser global 'window' is banned in hooks — hooks must be RN-safe."
-          },
-          {
-            "name": "document",
-            "message": "Browser global 'document' is banned in hooks — hooks must be RN-safe."
-          },
-          {
-            "name": "navigator",
-            "message": "Browser global 'navigator' is banned in hooks — hooks must be RN-safe."
-          },
-          {
-            "name": "HTMLMediaElement",
-            "message": "Browser global 'HTMLMediaElement' is banned in hooks — hooks must be RN-safe."
-          }
-        ]
-      }
-    }
-  ]
+  }
 }

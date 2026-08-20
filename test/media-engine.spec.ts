@@ -89,6 +89,53 @@ describe('MediaEngine', () => {
     expect(() => engine.play()).not.toThrow();
   });
 
+  it('hasEnded() reflects the element ended state', () => {
+    Object.defineProperty(video, 'ended', { configurable: true, value: false });
+    expect(engine.hasEnded()).toBe(false);
+    Object.defineProperty(video, 'ended', { configurable: true, value: true });
+    expect(engine.hasEnded()).toBe(true);
+  });
+
+  describe('live→VOD detection (liveEnded)', () => {
+    const setDuration = (value: number) =>
+      Object.defineProperty(video, 'duration', { configurable: true, value });
+
+    it('emits liveEnded when duration flips from Infinity to finite', () => {
+      const handler = jest.fn();
+      engine.on('liveEnded', handler);
+
+      // Live: infinite duration observed first.
+      setDuration(Infinity);
+      video.dispatchEvent(new Event('durationchange'));
+      expect(handler).not.toHaveBeenCalled();
+
+      // Playlist gained an end boundary → finite duration.
+      setDuration(120);
+      video.dispatchEvent(new Event('durationchange'));
+      expect(handler).toHaveBeenCalledTimes(1);
+    });
+
+    it('emits liveEnded only once', () => {
+      const handler = jest.fn();
+      engine.on('liveEnded', handler);
+      setDuration(Infinity);
+      video.dispatchEvent(new Event('durationchange'));
+      setDuration(120);
+      video.dispatchEvent(new Event('durationchange'));
+      setDuration(130);
+      video.dispatchEvent(new Event('durationchange'));
+      expect(handler).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not emit liveEnded for a plain VOD asset (never infinite)', () => {
+      const handler = jest.fn();
+      engine.on('liveEnded', handler);
+      setDuration(120);
+      video.dispatchEvent(new Event('durationchange'));
+      expect(handler).not.toHaveBeenCalled();
+    });
+  });
+
   it('load() sets video src for native formats', () => {
     engine.load('video.mp4');
     expect(video.src).toContain('video.mp4');
