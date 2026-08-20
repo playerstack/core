@@ -1,29 +1,25 @@
-export type { IconProps } from '@typings/icons.types';
-
-// Desktop / shared icons
-export { default as PlayIcon } from '@icons/PlayIcon';
-export { default as PauseIcon } from '@icons/PauseIcon';
-export { default as ReplayIcon } from '@icons/ReplayIcon';
-export { default as MutedIcon } from '@icons/MutedIcon';
-export { default as UnmutedIcon } from '@icons/UnmutedIcon';
-export { default as FullscreenIcon } from '@icons/FullscreenIcon';
-export { default as UnfullscreenIcon } from '@icons/UnfullscreenIcon';
-export { default as SettingsIcon } from '@icons/SettingsIcon';
-export { default as ArrowLeftIcon } from '@icons/ArrowLeftIcon';
-export { default as ArrowRightIcon } from '@icons/ArrowRightIcon';
-export { default as InLoopIcon } from '@icons/InLoopIcon';
-export { default as PipIcon } from '@icons/PipIcon';
-export { default as CaptionsIcon } from '@icons/CaptionsIcon';
-export { default as CastIcon } from '@icons/CastIcon';
-export { default as CheckedIcon } from '@icons/CheckedIcon';
-export { default as NextTrackIcon } from '@icons/NextTrackIcon';
-export { default as PreviousTrackIcon } from '@icons/PreviousTrackIcon';
-export { default as SkipAdIcon } from '@icons/SkipAdIcon';
-export { default as SkipBackIcon } from '@icons/SkipBackIcon';
-export { default as SkipForwardIcon } from '@icons/SkipForwardIcon';
-export { default as SpinnerLoading } from '@icons/SpinnerLoading';
+export { playIcon } from '@icons/playIcon';
+export { pauseIcon } from '@icons/pauseIcon';
+export { replayIcon } from '@icons/replayIcon';
+export { mutedIcon } from '@icons/mutedIcon';
+export { unmutedIcon } from '@icons/unmutedIcon';
+export { fullscreenIcon } from '@icons/fullscreenIcon';
+export { unfullscreenIcon } from '@icons/unfullscreenIcon';
+export { settingsIcon } from '@icons/settingsIcon';
+export { arrowLeftIcon } from '@icons/arrowLeftIcon';
+export { arrowRightIcon } from '@icons/arrowRightIcon';
+export { inLoopIcon } from '@icons/inLoopIcon';
+export { pipIcon } from '@icons/pipIcon';
+export { captionsIcon, captionsActiveIcon } from '@icons/captionsIcon';
+export { castIcon } from '@icons/castIcon';
+export { checkedIcon } from '@icons/checkedIcon';
+export { nextTrackIcon } from '@icons/nextTrackIcon';
+export { previousTrackIcon } from '@icons/previousTrackIcon';
+export { skipAdIcon } from '@icons/skipAdIcon';
+export { skipBackIcon } from '@icons/skipBackIcon';
+export { skipForwardIcon } from '@icons/skipForwardIcon';
 
 // Audio-specific icons
-export { default as AudioPlayIcon } from '@icons/AudioPlayIcon';
-export { default as AudioPauseIcon } from '@icons/AudioPauseIcon';
-export { default as AudioReplayIcon } from '@icons/AudioReplayIcon';
+export { audioPlayIcon } from '@icons/audioPlayIcon';
+export { audioPauseIcon } from '@icons/audioPauseIcon';
+export { audioReplayIcon } from '@icons/audioReplayIcon';

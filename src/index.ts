@@ -2,6 +2,20 @@
 export { MediaEngine } from '@media-engine';
 export { EventEmitter } from '@event-emitter';
 
+// Controllers
+export { PlayerOrchestrator } from '@player-orchestrator';
+export type { PlayerOrchestratorConfig, PlayerOrchestratorEvents } from '@typings/player-orchestrator.types';
+export { UIController } from '@ui-controller';
+export type { UIControllerConfig, UIControllerEvents } from '@typings/ui-controller.types';
+export { AdsController } from '@ads-controller';
+export type { AdsControllerEvents, AdsState } from '@typings/ads-controller.types';
+export { VolumeController } from '@volume-controller';
+export type { VolumeControllerEvents } from '@typings/volume-controller.types';
+export { LiveDVRController } from '@live-dvr-controller';
+export type { LiveDVRControllerEvents } from '@typings/live-dvr-controller.types';
+export { DoubleTapController } from '@double-tap-controller';
+export type { DoubleTapConfig, SkipState, DoubleTapControllerEvents } from '@typings/double-tap-controller.types';
+
 // Live DVR
 export { computeLiveDVRState, sliderPositionToTime, formatLiveOffset } from '@live-dvr';
 export type { LiveDVRState, LiveDVRConfig } from '@typings/live-dvr.types';
@@ -122,3 +136,7 @@ export type {
   MediaState,
   MediaEventHandler,
 } from '@typings/media.types';
+
+// Icons
+export * from '@icons/index';
+export type { IconDescriptor, SvgElement } from '@typings/icons.types';

@@ -40,6 +40,8 @@ export class MediaEngine extends EventEmitter<MediaEngineEvents & Record<string,
   private loadSequence = 0;
   private listenersAttached = false;
   private _destroyed = false;
+  private _liveEndedEmitted = false;
+  private _sawInfiniteDuration = false;
 
   constructor(element: HTMLMediaElement, config: MediaEngineConfig = {}) {
     super();
@@ -63,6 +65,8 @@ export class MediaEngine extends EventEmitter<MediaEngineEvents & Record<string,
 
     this.destroySDKs();
     this.loadSequence++;
+    this._liveEndedEmitted = false;
+    this._sawInfiniteDuration = false;
     const currentSequence = this.loadSequence;
 
     const urlStr = typeof url === 'string' ? url : '';
@@ -90,7 +94,14 @@ export class MediaEngine extends EventEmitter<MediaEngineEvents & Record<string,
   play(): Promise<void> | void {
     const promise = this.el.play();
     if (promise) {
-      return promise.catch((err) => this.emit('error', err));
+      return promise.catch((err) => {
+        // play() rejections are transient browser signals (AbortError, NotAllowedError).
+        // They are NOT media errors — do not emit as error events.
+        // The orchestrator will retry play via _wantsToPlay mechanism.
+        if (err?.name !== 'AbortError' && err?.name !== 'NotAllowedError') {
+          this.emit('error', err);
+        }
+      });
     }
   }
 
@@ -131,6 +142,15 @@ export class MediaEngine extends EventEmitter<MediaEngineEvents & Record<string,
     return this.el.muted;
   }
 
+  /**
+   * Whether the underlying element has reached its end.
+   * Used to disambiguate a genuine end-of-stream from a transient
+   * buffering pause (which the orchestrator otherwise swallows).
+   */
+  hasEnded(): boolean {
+    return this.el.ended;
+  }
+
   setPlaybackRate(rate: number): void {
     try {
       this.el.playbackRate = rate;
@@ -166,6 +186,19 @@ export class MediaEngine extends EventEmitter<MediaEngineEvents & Record<string,
     const duration = this.getDuration();
     if (duration && end > duration) return duration;
     return end;
+  }
+
+  /**
+   * Get all buffered time ranges as an array.
+   * Used for multi-range buffer visualization (YouTube-style).
+   */
+  getBufferedRanges(): Array<{ start: number; end: number }> {
+    const { buffered } = this.el;
+    const ranges: Array<{ start: number; end: number }> = [];
+    for (let i = 0; i < buffered.length; i++) {
+      ranges.push({ start: buffered.start(i), end: buffered.end(i) });
+    }
+    return ranges;
   }
 
   enablePiP(): void {
@@ -279,6 +312,16 @@ export class MediaEngine extends EventEmitter<MediaEngineEvents & Record<string,
         this.hls.on(Hls.Events.MANIFEST_PARSED, () => {
           this.emit('ready');
         });
+        // hls.js flips level details to non-live once the playlist gains an
+        // `#EXT-X-ENDLIST`. This fires earlier and more reliably than the native
+        // durationchange, so treat it as the authoritative live→VOD signal.
+        this.hls.on(Hls.Events.LEVEL_UPDATED, (_event: any, data: any) => {
+          if (!this._liveEndedEmitted && data?.details && data.details.live === false) {
+            this._sawInfiniteDuration = true;
+            this._liveEndedEmitted = true;
+            this.emit('liveEnded');
+          }
+        });
         this.hls.on(Hls.Events.ERROR, (event: any, data: any) => {
           this.emit('error', event, data, this.hls, Hls);
         });
@@ -301,7 +344,22 @@ export class MediaEngine extends EventEmitter<MediaEngineEvents & Record<string,
         if (parseInt(this.config.dashVersion) < 3) {
           this.dash.getDebug().setLogToBrowserConsole(false);
         } else {
-          this.dash.updateSettings({ debug: { logLevel: dashjs.LogLevel.LOG_LEVEL_NONE } });
+          this.dash.updateSettings({
+            debug: { logLevel: dashjs.LogLevel.LOG_LEVEL_NONE },
+            streaming: {
+              // Reduce initial buffer target for faster start
+              buffer: {
+                fastSwitchEnabled: true,
+                stableBufferTime: 12,
+                bufferTimeAtTopQuality: 20,
+                initialBufferLevel: NaN, // use default
+              },
+              // Use lower latency ABR for faster quality decisions
+              abr: {
+                autoSwitchBitrate: { video: true, audio: true },
+              },
+            },
+          });
         }
         this.emit('loaded');
       })
@@ -353,7 +411,33 @@ export class MediaEngine extends EventEmitter<MediaEngineEvents & Record<string,
   private onError = (e: Event) => this.emit('error', e);
   private onRateChange = () => this.emit('playbackRateChange', this.el.playbackRate);
   private onCanPlay = () => this.emit('ready');
-  private onDurationChange = () => this.emit('durationChange', this.getDuration());
+  private onDurationChange = () => {
+    this._detectLiveToVOD();
+    this.emit('durationChange', this.getDuration());
+  };
+
+  /**
+   * Detect a live→VOD transition from the media element itself.
+   *
+   * A live stream reports `duration === Infinity`. When the source playlist
+   * gains an end boundary (HLS `#EXT-X-ENDLIST`), the element's duration flips
+   * to a finite value. This is the SDK-agnostic signal used for native HLS and
+   * DASH (hls.js also emits an explicit level update, handled separately).
+   */
+  private _detectLiveToVOD(): void {
+    if (this._liveEndedEmitted) return;
+    const raw = this.el.duration;
+    if (raw === Infinity) {
+      this._sawInfiniteDuration = true;
+      return;
+    }
+    // Only treat a finite duration as a transition if we previously observed a
+    // live (infinite) duration — a plain VOD asset is not a "live ended" event.
+    if (this._sawInfiniteDuration && isFinite(raw) && raw > 0) {
+      this._liveEndedEmitted = true;
+      this.emit('liveEnded');
+    }
+  }
   private onTimeUpdate = () => this.emit('timeUpdate', this.el.currentTime);
   private onVolumeChange = () => this.emit('volumeChange', this.el.volume, this.el.muted);
   private onProgress = () => this.emit('progress', this.getSecondsLoaded());
