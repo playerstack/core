@@ -72,12 +72,25 @@
       "require": "./dist/cjs/reducer.js",
       "types": "./dist/types/reducer.d.ts"
     },
-    "./ui": {
-      "react-native": "./dist/esm/ui.js",
-      "import": "./dist/esm/ui.js",
-      "require": "./dist/cjs/ui.js",
-      "types": "./dist/types/ui.d.ts"
+    "./ui-utils": {
+      "react-native": "./dist/esm/ui-utils.js",
+      "import": "./dist/esm/ui-utils.js",
+      "require": "./dist/cjs/ui-utils.js",
+      "types": "./dist/types/ui-utils.d.ts"
     },
+    "./ui": {
+      "react-native": "./dist/esm/ui/index.js",
+      "import": "./dist/esm/ui/index.js",
+      "require": "./dist/cjs/ui/index.js",
+      "types": "./dist/types/ui/index.d.ts"
+    },
+    "./styles": {
+      "react-native": "./dist/esm/styles/index.js",
+      "import": "./dist/esm/styles/index.js",
+      "require": "./dist/cjs/styles/index.js",
+      "types": "./dist/types/styles/index.d.ts"
+    },
+    "./styles/css": "./dist/styles/playerstack.css",
     "./engine": {
       "react-native": "./dist/esm/media-engine.js",
       "import": "./dist/esm/media-engine.js",
@@ -125,6 +138,12 @@
       "import": "./dist/esm/types/adapters.types.js",
       "require": "./dist/cjs/types/adapters.types.js",
       "types": "./dist/types/types/adapters.types.d.ts"
+    },
+    "./adapters/framework": {
+      "react-native": "./dist/esm/adapters/index.js",
+      "import": "./dist/esm/adapters/index.js",
+      "require": "./dist/cjs/adapters/index.js",
+      "types": "./dist/types/adapters/index.d.ts"
     },
     "./utils": {
       "react-native": "./dist/esm/utils/index.js",
@@ -207,7 +226,7 @@
     "clean": "rimraf dist coverage",
     "build": "node scripts/build.js",
     "build:types": "tsc --emitDeclarationOnly --outDir dist/types",
-    "lint": "eslint \"src/**/*.ts\"",
+    "lint": "eslint \"src/**/*.ts\" --max-warnings=0",
     "lint:fix": "eslint \"src/**/*.ts\" --fix",
     "format": "prettier --check \"src/**/*.ts\"",
     "format:fix": "prettier --write \"src/**/*.ts\"",
@@ -238,6 +257,7 @@
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.1",
+    "fast-check": "^4.9.0",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "jest-junit": "^16.0.0",

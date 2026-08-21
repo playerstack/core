@@ -101,7 +101,7 @@ export { generateHeatmapPath } from '@heatmap';
 export type { HeatmapDataPoint } from '@typings/heatmap.types';
 
 // UI Sizing
-export { buildIconProps, sliderWidth, buildSettingsLabel, buildSettingsOptions, settingsInitialState } from '@ui';
+export { buildIconProps, sliderWidth, buildSettingsLabel, buildSettingsOptions, settingsInitialState } from '@ui-utils';
 export type { SettingsOption } from '@typings/ui.types';
 
 // Reducer

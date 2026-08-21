@@ -9,6 +9,12 @@ module.exports = {
   coveragePathIgnorePatterns: ['node_modules', 'dist'],
   reporters: ['default', ['jest-junit', { outputDirectory: 'coverage', outputName: 'report.xml' }]],
   testMatch: ['<rootDir>/test/**/*.spec.ts'],
-  moduleFileExtensions: ['ts', 'js'],
+  moduleFileExtensions: ['ts', 'js', 'css'],
+  // Preserve the ts-jest transform (the preset default) and add a `.css` -> text
+  // transform so Style_Layer CSS imports resolve to their raw text (see cssTransform.js).
+  transform: {
+    '^.+\\.tsx?$': ['ts-jest', {}],
+    '\\.css$': '<rootDir>/test/__transforms__/cssTransform.js',
+  },
   resolver: '<rootDir>/jest.resolver.js',
 };
