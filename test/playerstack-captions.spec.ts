@@ -4,9 +4,10 @@ import type { VTTCue } from '@typings/utils/captions.types';
 
 /**
  * Spec for `playerstack-captions` — the caption overlay UI_Element (Req 3.3, 5.1, 5.2, 5.3,
- * 17.5). It verifies the Markup_Contract (`part="captions"` container with a `part="cue"`
- * region), store→display propagation (the active cue text appears when `seek` lands inside a
- * cue) and the reflected `data-active` state (Req 3.3).
+ * 17.5). It verifies the Markup_Contract (`part="captions"` draggable box holding a
+ * `part="caption-window"` region, with a `part="cue"` span per active cue), store→display
+ * propagation (the active cue text appears when `seek` lands inside a cue) and the reflected
+ * `data-active` state (Req 3.3).
  *
  * The element resolves the media context from an ancestor `playerstack-media-controller`, so
  * every test appends it as a light-DOM child of a connected controller and drives state via
@@ -32,11 +33,18 @@ describe('playerstack-captions', () => {
   });
 
   describe('Markup_Contract (Req 5.1, 5.2, 5.3)', () => {
-    it('renders part="captions" with a part="cue" region', () => {
-      const { el } = mount();
+    it('renders part="captions" with a part="caption-window" region, and a part="cue" span per active cue', () => {
+      const { host, el } = mount();
       const root = el;
 
+      // The draggable box + window region always exist (parity with the original `CaptionOverlay`
+      // structure); per-cue `part="cue"` spans are created ONLY while a cue is active.
       expect(root.querySelector('[part="captions"]')).not.toBeNull();
+      expect(root.querySelector('[part="caption-window"]')).not.toBeNull();
+      expect(root.querySelector('[part="cue"]')).toBeNull();
+
+      (el as unknown as { captionsSrc: VTTCue[] }).captionsSrc = CUES;
+      host.store.set({ seek: 2 });
       expect(root.querySelector('[part="cue"]')).not.toBeNull();
     });
 
@@ -66,8 +74,8 @@ describe('playerstack-captions', () => {
 
       host.store.set({ seek: 10 });
 
-      const cue = (el).querySelector('[part="cue"]');
-      expect(cue?.textContent).toBe('');
+      // No active cue -> no `part="cue"` span, and the host reflects inactive.
+      expect((el).querySelector('[part="cue"]')).toBeNull();
       expect(el.getAttribute('data-active')).toBe('false');
     });
   });
@@ -97,8 +105,8 @@ describe('playerstack-captions', () => {
 
       host.store.set({ seek: 2 });
 
-      const cue = (el).querySelector('[part="cue"]');
-      expect(cue?.textContent).toBe('');
+      // Cleared source -> no active cue span, host reflects inactive.
+      expect((el).querySelector('[part="cue"]')).toBeNull();
       expect(el.getAttribute('data-active')).toBe('false');
     });
 
@@ -116,6 +124,42 @@ describe('playerstack-captions', () => {
 
       const cue = (el).querySelector('[part="cue"]');
       expect(cue?.textContent).toBe('Hello');
+    });
+  });
+
+  describe('auto-position with controls visibility (parity: CaptionOverlay resting position)', () => {
+    /** Reads the numeric `bottom` px offset set inline on the caption box. */
+    function boxBottom(el: HTMLElement): number {
+      const box = el.querySelector('[part="captions"]') as HTMLElement;
+      return parseFloat(box.style.bottom);
+    }
+
+    it('rests just above the control bar (56px) while visible and drops near the bottom (24px) when hidden', async () => {
+      const { host, el } = mount();
+      // Controls visible on mount -> resting bottom 56px (just above the control bar). Vertical
+      // placement is governed by `bottom` (px), not a `top` percentage.
+      expect(boxBottom(el)).toBe(56);
+
+      // Controls hide -> the box drops near the bottom (24px). The reposition runs from a
+      // MutationObserver callback (a microtask), so flush the microtask queue before asserting.
+      host.setAttribute('data-hiding', 'true');
+      await Promise.resolve();
+      expect(boxBottom(el)).toBe(24);
+
+      // Controls reappear -> the box rises back to 56px.
+      host.removeAttribute('data-hiding');
+      await Promise.resolve();
+      expect(boxBottom(el)).toBe(56);
+    });
+
+    it('seeds the resting position from the controller data-hiding present at mount', () => {
+      const host = document.createElement('playerstack-media-controller') as PlayerstackMediaController;
+      document.body.appendChild(host);
+      host.setAttribute('data-hiding', 'true'); // controls already hidden before the captions mount
+      const el = document.createElement('playerstack-captions');
+      host.appendChild(el);
+      const box = el.querySelector('[part="captions"]') as HTMLElement;
+      expect(parseFloat(box.style.bottom)).toBe(24);
     });
   });
 

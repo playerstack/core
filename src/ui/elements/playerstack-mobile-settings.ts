@@ -26,6 +26,7 @@ import { buildSettingsLabel } from '@ui-utils';
 import { renderSvgFromDescriptor } from '@ui/icon-render';
 import { mobileSettingsGearIcon, mobileSpeedIcon, mobileCaptionsIcon, mobileBackIcon } from '@icons/mobile/index';
 import en from '@i18n/en';
+import { getTranslations } from '@i18n/index';
 
 /** Speed options mirrored from the original SPEED_OPTIONS (value order top→bottom). */
 const SPEED_VALUES: readonly string[] = ['2', '1.5', '1.25', '1', '0.75', '0.5', '0.25'];
@@ -107,7 +108,12 @@ export class PlayerstackMobileSettings extends PlayerstackElement {
   }
 
   private resolveI18n(): MobileSettingsI18n {
-    return { ...(en as MobileSettingsI18n), ...(this._i18n ?? {}) };
+    // Resolve the FULL localized dictionary from the `language` field (parity with the other i18n
+    // elements), then layer explicit overrides on top — the Skin passes `{ language }`, so without
+    // this the mobile panel labels (Quality/Speed/Captions/Off) would always render English.
+    const language = typeof this._i18n?.language === 'string' ? this._i18n.language : undefined;
+    const base = language ? getTranslations(language) : en;
+    return { ...(base as MobileSettingsI18n), ...(this._i18n ?? {}) };
   }
 
   private reflectOpen(): void {

@@ -21,14 +21,22 @@
  * its accessible name is configurable through the `aria-label` attribute; when omitted, the
  * default English label applies.
  */
-import type { SettingsDefaultLabel, SettingsI18n, SettingsQualityOption } from '@typings/ui/playerstack-settings.types';
+import type {
+  SettingsCaptionTrack,
+  SettingsDefaultLabel,
+  SettingsI18n,
+  SettingsQualityOption,
+} from '@typings/ui/playerstack-settings.types';
 import type { SettingsOption } from '@typings/ui.types';
 import type { MediaStoreState } from '@typings/ui/media-store.types';
+import type { CaptionStyleOptions } from '@typings/utils/captions.types';
 import { PlayerstackElement } from '@ui/playerstack-element';
 import { buildSettingsOptions, buildSettingsLabel, settingsInitialState } from '@ui-utils';
+import { CAPTION_STYLE_OPTIONS, DEFAULT_CAPTION_STYLE } from '@utils/captions';
 import { renderSvgFromDescriptor } from '@ui/icon-render';
 import { settingsIcon, arrowLeftIcon, arrowRightIcon } from '@icons/index';
 import en from '@i18n/en';
+import { getTranslations } from '@i18n/index';
 
 /** Default accessible name used when no `aria-label` attribute is provided (Req 1.5). */
 const DEFAULT_LABEL: SettingsDefaultLabel = 'Settings';
@@ -38,6 +46,29 @@ const SPEED_KEY = 'speed';
 
 /** The top-level Quality entry `value` produced by `buildSettingsOptions`. */
 const QUALITY_KEY = 'quality';
+
+/** The top-level Captions entry `value` produced by `buildSettingsOptions`. */
+const CAPTIONS_KEY = 'captions';
+
+/** Sentinel option `value` for turning captions OFF (parity with the original `'off'`). */
+const CAPTION_OFF = 'off';
+
+/**
+ * The ordered list of caption STYLE properties surfaced by the "Options" panel (parity with the
+ * original desktop `CaptionOptions` `OPTIONS_MAP`). Each `key` maps into `CAPTION_STYLE_OPTIONS`
+ * (the value list) and into the i18n bag (the row label).
+ */
+const CAPTION_STYLE_KEYS: ReadonlyArray<keyof CaptionStyleOptions> = [
+  'fontFamily',
+  'fontColor',
+  'fontSize',
+  'fontOpacity',
+  'backgroundColor',
+  'backgroundOpacity',
+  'windowColor',
+  'windowOpacity',
+  'edgeStyle',
+];
 
 export class PlayerstackSettings extends PlayerstackElement {
   /**
@@ -72,14 +103,46 @@ export class PlayerstackSettings extends PlayerstackElement {
   private _adMode = false;
 
   /**
+   * Public caption tracks fed into `buildSettingsOptions` as the Captions category options
+   * (parity with the original desktop settings Captions entry). Defaults to an empty list so no
+   * Captions category renders until a Skin provides tracks. Setting it re-renders the menu.
+   */
+  private _captions: SettingsCaptionTrack[] = [];
+
+  /**
+   * The currently active caption language (`null` = Off). Mirrored so the Captions submenu marks
+   * the active track and the main row shows the current value (parity with the original
+   * `values.captions`). Set through the property channel; re-renders the panels.
+   */
+  private _activeCaption: string | null = null;
+
+  /**
+   * The current caption STYLE (parity with the original `captionStyle`). Drives the current-value
+   * labels + active marks in the "Options" style panel. Defaults to `DEFAULT_CAPTION_STYLE`.
+   */
+  private _captionStyle: CaptionStyleOptions = { ...DEFAULT_CAPTION_STYLE };
+
+  /**
    * Local open/closed UI state mirroring `settingsInitialState` from `@ui-utils`. `generalMenu`
-   * tracks whether the main panel is open; `speed`/`quality` track which submenu is open.
-   * Captions is unused here (the settings element only owns speed + quality) but kept so the
-   * shape matches the shared initial state.
+   * tracks whether the main panel is open; `speed`/`quality`/`captions` track which submenu is
+   * open (Captions now IS owned by this element — parity with the original desktop settings).
    */
   private uiState: { generalMenu: boolean; speed: boolean; quality: boolean; captions: boolean } = {
     ...settingsInitialState,
   };
+
+  /**
+   * Whether the caption STYLE "Options" panel is open (parity with the original
+   * `showCaptionOptions`). It layers over the Captions submenu, reached via the "Options"
+   * affordance in the Captions submenu header.
+   */
+  private captionOptionsOpen = false;
+
+  /**
+   * Which caption-style PROPERTY sub-page is open inside the "Options" panel (`null` = the
+   * style-property list). Mirrors the original `CaptionOptions` `subMenu`.
+   */
+  private captionStyleSubKey: keyof CaptionStyleOptions | null = null;
 
   /** The rendered settings button; kept so `render` stays idempotent across reconnects. */
   private settingsButton: HTMLButtonElement | null = null;
@@ -89,6 +152,9 @@ export class PlayerstackSettings extends PlayerstackElement {
 
   /** The rendered submenu panel; kept so a category selection can populate + reveal it. */
   private submenu: HTMLDivElement | null = null;
+
+  /** The rendered caption STYLE "Options" panel; kept so it can be populated + revealed. */
+  private captionOptionsPanel: HTMLDivElement | null = null;
 
   /** Latest playbackRate mirrored from the store, used to mark the active speed option. */
   private playbackRate = 1;
@@ -145,6 +211,45 @@ export class PlayerstackSettings extends PlayerstackElement {
   }
 
   /**
+   * Public setter for the caption tracks (default `[]`). Rebuilds the menu so the Captions
+   * category appears/updates immediately (parity with the original desktop settings captions).
+   */
+  set captions(value: SettingsCaptionTrack[]) {
+    this._captions = Array.isArray(value) ? value : [];
+    this.rebuildMenu();
+  }
+
+  get captions(): SettingsCaptionTrack[] {
+    return this._captions;
+  }
+
+  /**
+   * Public setter for the active caption language (`null` = Off). Rebuilds so the current-value
+   * label + active mark reflect the external selection (e.g. the CC quick-toggle button).
+   */
+  set activeCaption(value: string | null) {
+    this._activeCaption = value ?? null;
+    this.rebuildMenu();
+  }
+
+  get activeCaption(): string | null {
+    return this._activeCaption;
+  }
+
+  /**
+   * Public setter for the caption style (default `DEFAULT_CAPTION_STYLE`). Rebuilds so the style
+   * "Options" panel reflects the current values (parity with the original `captionStyle` prop).
+   */
+  set captionStyle(value: CaptionStyleOptions | null) {
+    this._captionStyle = value ? { ...DEFAULT_CAPTION_STYLE, ...value } : { ...DEFAULT_CAPTION_STYLE };
+    this.rebuildMenu();
+  }
+
+  get captionStyle(): CaptionStyleOptions {
+    return this._captionStyle;
+  }
+
+  /**
    * Tracks the current playbackRate/quality from the store so the active option can be marked
    * (Req 3.3). Reflects `data-quality` on the host as a stable state hook and re-marks the
    * active entries in whichever panel is currently rendered. Also updates the "HD" badge and
@@ -153,6 +258,15 @@ export class PlayerstackSettings extends PlayerstackElement {
   override onStoreChange(state: Readonly<MediaStoreState>): void {
     this.playbackRate = state.playbackRate;
     this.playbackQuality = state.playbackQuality;
+    // Mirror the active caption from the store so a CC quick-toggle (which sets `activeCaption`
+    // on the store) keeps the Captions row value + submenu active-mark in sync without the Skin
+    // having to also push the `activeCaption` property (parity with the original
+    // `useSettingsOptions` effect that synced `values.captions` from `activeCaption`).
+    const storeCaption = state.activeCaption ?? null;
+    if (storeCaption !== this._activeCaption) {
+      this._activeCaption = storeCaption;
+      this.renderPanels();
+    }
     this.reflectState({ quality: state.playbackQuality });
     this.markActiveOptions();
     this.refreshValueLabels();
@@ -198,7 +312,13 @@ export class PlayerstackSettings extends PlayerstackElement {
    * `buildSettingsOptions`/`buildSettingsLabel` accept.
    */
   private resolveI18n(): SettingsI18n {
-    return { ...(en as SettingsI18n), ...(this._i18n ?? {}) };
+    // Resolve the FULL localized dictionary from the `language` field (parity with the other i18n
+    // elements + the original `useAppSelector().i18n`), then layer any explicit overrides on top.
+    // The Skin passes `{ language }`, so without this the menu (Speed/Quality/Captions + the new
+    // caption-STYLE labels) would always render English. Explicit label keys still win.
+    const language = typeof this._i18n?.language === 'string' ? this._i18n.language : undefined;
+    const base = language ? getTranslations(language) : en;
+    return { ...(base as SettingsI18n), ...(this._i18n ?? {}) };
   }
 
   /**
@@ -209,9 +329,13 @@ export class PlayerstackSettings extends PlayerstackElement {
    * original hook.
    */
   private buildOptions(): SettingsOption[] {
+    // Captions category options mirror the original `useSettingsOptions.captionOptions`: one entry
+    // per track (`{ label, value: language }`); `buildSettingsOptions` prepends the "Off" row.
+    const captionOptions =
+      this._captions.length > 0 ? this._captions.map((track) => ({ label: track.label, value: track.language })) : null;
     return buildSettingsOptions({
       qualityOptions: this._qualityOptions,
-      captionOptions: null,
+      captionOptions,
       live: false,
       adMode: this._adMode,
       i18n: this.resolveI18n(),
@@ -232,6 +356,14 @@ export class PlayerstackSettings extends PlayerstackElement {
     if (category === QUALITY_KEY) {
       const q = this.playbackQuality ?? 0;
       return buildSettingsLabel({ label: QUALITY_KEY, value: String(q), i18n });
+    }
+    if (category === CAPTIONS_KEY) {
+      // Off when no active caption; else the active track's label (parity with `values.captions`).
+      if (this._activeCaption === null) {
+        return i18n.off ?? 'Off';
+      }
+      const track = this._captions.find((t) => t.language === this._activeCaption);
+      return track?.label ?? this._activeCaption;
     }
     return '';
   }
@@ -257,22 +389,52 @@ export class PlayerstackSettings extends PlayerstackElement {
    */
   private toggleMenu(): void {
     const nextOpen = !this.uiState.generalMenu;
+    // Closing (or reopening) the menu always drops the caption STYLE overlay so it never lingers
+    // behind a hidden panel (parity with the original: the settings menu owns `showCaptionOptions`
+    // and resets it when the menu closes).
+    this.captionOptionsOpen = false;
+    this.captionStyleSubKey = null;
     this.uiState = nextOpen ? { ...settingsInitialState, generalMenu: true } : { ...settingsInitialState };
     this.reflectOpenState();
     this.renderPanels();
   }
 
   /**
-   * Opens the submenu for a given top-level category (`speed`/`quality`), keeping the main
-   * menu open. Populates and reveals the submenu with that category's options.
+   * Opens the submenu for a given top-level category (`speed`/`quality`/`captions`), keeping the
+   * main menu open. Populates and reveals the submenu with that category's options. Opening any
+   * submenu closes the caption STYLE "Options" overlay.
    */
-  private openSubmenu(category: typeof SPEED_KEY | typeof QUALITY_KEY): void {
+  private openSubmenu(category: typeof SPEED_KEY | typeof QUALITY_KEY | typeof CAPTIONS_KEY): void {
+    this.captionOptionsOpen = false;
+    this.captionStyleSubKey = null;
     this.uiState = {
       ...settingsInitialState,
       generalMenu: true,
       speed: category === SPEED_KEY,
       quality: category === QUALITY_KEY,
+      captions: category === CAPTIONS_KEY,
     };
+    this.renderPanels();
+  }
+
+  /**
+   * Opens the caption STYLE "Options" panel (parity with the original `setShowCaptionOptions(true)`),
+   * keeping the Captions submenu state so closing returns to it.
+   */
+  private openCaptionOptions(): void {
+    this.captionOptionsOpen = true;
+    this.captionStyleSubKey = null;
+    this.uiState = { ...settingsInitialState, generalMenu: true, captions: true };
+    this.renderPanels();
+  }
+
+  /**
+   * Closes the caption STYLE "Options" panel and returns to the Captions submenu (parity with the
+   * original `onClose` -> `handleMenuItemClick('captions')`).
+   */
+  private closeCaptionOptions(): void {
+    this.captionOptionsOpen = false;
+    this.captionStyleSubKey = null;
     this.renderPanels();
   }
 
@@ -308,14 +470,45 @@ export class PlayerstackSettings extends PlayerstackElement {
    * adapter-extensible `playerstack-quality-request` (`{ value }`). The panel closes after a
    * selection so the interaction reads as "pick and dismiss".
    */
-  private selectOption(category: typeof SPEED_KEY | typeof QUALITY_KEY, value: string): void {
+  private selectOption(category: typeof SPEED_KEY | typeof QUALITY_KEY | typeof CAPTIONS_KEY, value: string): void {
     if (category === SPEED_KEY) {
       this.dispatchRequest('playerstack-rate-request', { rate: Number(value) });
-    } else {
+    } else if (category === QUALITY_KEY) {
       this.dispatchRequest('playerstack-quality-request', { value });
+    } else {
+      // Caption language selection (parity with the original `onCaptionChange(value === 'off' ?
+      // null : value)`): the request detail carries `null` for Off so the Skin turns captions off.
+      this.dispatchRequest('playerstack-caption-request', { value: value === CAPTION_OFF ? null : value });
     }
+    this.captionOptionsOpen = false;
+    this.captionStyleSubKey = null;
     this.uiState = { ...settingsInitialState };
     this.reflectOpenState();
+    this.renderPanels();
+  }
+
+  /**
+   * Applies a caption STYLE change (parity with the original `handleSelectValue`): merges the new
+   * `{ [key]: value }` into the current style and emits `playerstack-caption-style-request`
+   * (`{ style }`) so the Skin persists it (cookie) + feeds the overlay. Returns to the style list.
+   */
+  private selectCaptionStyle(key: keyof CaptionStyleOptions, value: string): void {
+    const nextStyle: CaptionStyleOptions = { ...this._captionStyle, [key]: value };
+    this._captionStyle = nextStyle;
+    this.dispatchRequest('playerstack-caption-style-request', { style: nextStyle });
+    this.captionStyleSubKey = null;
+    this.renderPanels();
+  }
+
+  /**
+   * Resets the caption style to the defaults (parity with the original Reset row ->
+   * `onStyleChange(DEFAULT_CAPTION_STYLE)`), emitting the style request so the Skin persists it.
+   */
+  private resetCaptionStyle(): void {
+    const nextStyle: CaptionStyleOptions = { ...DEFAULT_CAPTION_STYLE };
+    this._captionStyle = nextStyle;
+    this.dispatchRequest('playerstack-caption-style-request', { style: nextStyle });
+    this.captionStyleSubKey = null;
     this.renderPanels();
   }
 
@@ -355,9 +548,16 @@ export class PlayerstackSettings extends PlayerstackElement {
     const submenu = document.createElement('div');
     submenu.setAttribute('part', 'submenu');
 
+    // Caption STYLE "Options" panel (parity with the original `CaptionOptions`), rendered on
+    // demand when the "Options" affordance is used. Hidden by default; the Style_Layer reveals it
+    // while the host reflects `data-caption-options`.
+    const captionOptionsPanel = document.createElement('div');
+    captionOptionsPanel.setAttribute('part', 'caption-options');
+
     this.settingsButton = button;
     this.menu = menu;
     this.submenu = submenu;
+    this.captionOptionsPanel = captionOptionsPanel;
 
     // Ensure a pending slide-in timer never survives teardown.
     this.addDisposer(() => this.clearSubmenuReveal());
@@ -366,6 +566,7 @@ export class PlayerstackSettings extends PlayerstackElement {
     this.root.appendChild(button);
     this.root.appendChild(menu);
     this.root.appendChild(submenu);
+    this.root.appendChild(captionOptionsPanel);
 
     this.reflectOpenState();
     this.renderPanels();
@@ -416,13 +617,27 @@ export class PlayerstackSettings extends PlayerstackElement {
       this.removeAttribute('data-fullhd');
     }
 
-    // Which submenu (if any) is currently open.
-    const openCategory = this.uiState.speed ? SPEED_KEY : this.uiState.quality ? QUALITY_KEY : null;
+    // Which submenu (if any) is currently open (now includes Captions — parity with the original
+    // desktop settings, which owned the Captions category).
+    const openCategory = this.uiState.speed
+      ? SPEED_KEY
+      : this.uiState.quality
+        ? QUALITY_KEY
+        : this.uiState.captions
+          ? CAPTIONS_KEY
+          : null;
     // Reflect the open submenu so the Style_Layer hides the main menu behind it.
     if (openCategory !== null) {
       this.setAttribute('data-submenu', openCategory);
     } else {
       this.removeAttribute('data-submenu');
+    }
+    // Reflect whether the caption STYLE "Options" panel is open so the Style_Layer reveals it over
+    // the Captions submenu (parity with the original `showCaptionOptions`).
+    if (this.captionOptionsOpen) {
+      this.setAttribute('data-caption-options', 'true');
+    } else {
+      this.removeAttribute('data-caption-options');
     }
 
     // Main menu: one row per top-level category (Speed / Quality). Each row shows the label on
@@ -452,7 +667,7 @@ export class PlayerstackSettings extends PlayerstackElement {
       item.appendChild(arrow);
 
       const onItemClick = (): void => {
-        if (option.value === SPEED_KEY || option.value === QUALITY_KEY) {
+        if (option.value === SPEED_KEY || option.value === QUALITY_KEY || option.value === CAPTIONS_KEY) {
           this.openSubmenu(option.value);
         }
       };
@@ -488,6 +703,22 @@ export class PlayerstackSettings extends PlayerstackElement {
       back.addEventListener('click', onBack);
       this.addDisposer(() => back.removeEventListener('click', onBack));
       header.appendChild(back);
+
+      // Captions submenu header carries an "Options" affordance (parity with the original
+      // DropdownOverlay `showOptionsButton` -> `onOptionsClick`) that opens the caption STYLE panel.
+      if (openCategory === CAPTIONS_KEY) {
+        const optionsLink = document.createElement('button');
+        optionsLink.setAttribute('type', 'button');
+        optionsLink.setAttribute('part', 'submenu-options');
+        optionsLink.textContent = i18n.captionOptions ?? 'Options';
+        const onOptions = (event: Event): void => {
+          event.stopPropagation();
+          this.openCaptionOptions();
+        };
+        optionsLink.addEventListener('click', onOptions);
+        this.addDisposer(() => optionsLink.removeEventListener('click', onOptions));
+        header.appendChild(optionsLink);
+      }
       this.submenu.appendChild(header);
 
       // Content wrapper (StyledDropdownContent): slide-in reveal target.
@@ -499,9 +730,13 @@ export class PlayerstackSettings extends PlayerstackElement {
         item.setAttribute('type', 'button');
         item.setAttribute('part', 'submenu-item');
         item.setAttribute('data-value', child.value);
-        // Reuse the shared label builder so e.g. speed `1` reads "Normal" and quality `0`
-        // reads "Auto" consistently with the rest of Core (Req 1.6).
-        item.textContent = buildSettingsLabel({ label: openCategory, value: child.value, i18n });
+        // Captions rows use their descriptor label directly (Off / track label). Speed/Quality
+        // reuse the shared label builder so e.g. speed `1` reads "Normal" and quality `0` reads
+        // "Auto" consistently with the rest of Core (Req 1.6).
+        item.textContent =
+          openCategory === CAPTIONS_KEY
+            ? child.label
+            : buildSettingsLabel({ label: openCategory, value: child.value, i18n });
 
         // Full-HD quality options carry an "HD" sub-badge (StyledDropdownItemValueSub).
         if (openCategory === QUALITY_KEY && child.isFullHD === true) {
@@ -526,7 +761,144 @@ export class PlayerstackSettings extends PlayerstackElement {
       this.clearSubmenuReveal();
     }
 
+    this.renderCaptionOptionsPanel(i18n);
     this.markActiveOptions();
+  }
+
+  /**
+   * Renders the caption STYLE "Options" panel (parity with the original `CaptionOptions`). It is a
+   * SEPARATE two-level panel layered over the Captions submenu:
+   *   - the MAIN page lists the nine style PROPERTIES (`{label} … {current value} ›`) plus a
+   *     "Reset" row (`onStyleChange(DEFAULT_CAPTION_STYLE)`), with a header back button ("Options")
+   *     that returns to the Captions submenu;
+   *   - drilling into a property REPLACES the list with that property's VALUE options (a check on
+   *     the active one), with a header back button labelled with the property name.
+   * Only (re)built when the panel is open; otherwise its children are cleared.
+   */
+  private renderCaptionOptionsPanel(i18n: SettingsI18n): void {
+    if (this.captionOptionsPanel === null) {
+      return;
+    }
+    this.captionOptionsPanel.replaceChildren();
+    if (!this.captionOptionsOpen) {
+      return;
+    }
+
+    const subKey = this.captionStyleSubKey;
+
+    // Header: back button (arrow + label). At the property list the label is "Options" and back
+    // returns to the Captions submenu; inside a property the label is the property name and back
+    // returns to the property list.
+    const header = document.createElement('div');
+    header.setAttribute('part', 'caption-options-header');
+
+    const back = document.createElement('button');
+    back.setAttribute('type', 'button');
+    back.setAttribute('part', 'submenu-back');
+
+    const backArrow = document.createElement('span');
+    backArrow.className = 'icon';
+    backArrow.innerHTML = renderSvgFromDescriptor(arrowLeftIcon);
+
+    const backTitle = document.createElement('span');
+    backTitle.textContent = subKey ? (i18n[subKey] ?? subKey) : (i18n.captionOptions ?? 'Options');
+
+    back.appendChild(backArrow);
+    back.appendChild(backTitle);
+
+    const onBack = (): void => {
+      if (this.captionStyleSubKey !== null) {
+        this.captionStyleSubKey = null;
+        this.renderPanels();
+      } else {
+        this.closeCaptionOptions();
+      }
+    };
+    back.addEventListener('click', onBack);
+    this.addDisposer(() => back.removeEventListener('click', onBack));
+    header.appendChild(back);
+    this.captionOptionsPanel.appendChild(header);
+
+    const content = document.createElement('div');
+    content.setAttribute('part', 'caption-options-content');
+
+    if (subKey === null) {
+      // Property list: one row per style property + a trailing Reset row.
+      for (const key of CAPTION_STYLE_KEYS) {
+        const item = document.createElement('button');
+        item.setAttribute('type', 'button');
+        item.setAttribute('part', 'caption-options-item');
+        item.setAttribute('data-key', key);
+
+        const label = document.createElement('span');
+        label.setAttribute('part', 'caption-options-label');
+        label.textContent = i18n[key] ?? key;
+
+        const value = document.createElement('span');
+        value.setAttribute('part', 'caption-options-value');
+        value.textContent = this.captionStyleValueLabel(key);
+
+        const arrow = document.createElement('span');
+        arrow.className = 'icon';
+        arrow.innerHTML = renderSvgFromDescriptor(arrowRightIcon);
+        value.appendChild(arrow);
+
+        item.appendChild(label);
+        item.appendChild(value);
+
+        const onOpenKey = (): void => {
+          this.captionStyleSubKey = key;
+          this.renderPanels();
+        };
+        item.addEventListener('click', onOpenKey);
+        this.addDisposer(() => item.removeEventListener('click', onOpenKey));
+        content.appendChild(item);
+      }
+
+      const reset = document.createElement('button');
+      reset.setAttribute('type', 'button');
+      reset.setAttribute('part', 'caption-options-item');
+      reset.setAttribute('data-key', 'reset');
+      const resetLabel = document.createElement('span');
+      resetLabel.setAttribute('part', 'caption-options-label');
+      resetLabel.textContent = i18n.reset ?? 'Reset';
+      reset.appendChild(resetLabel);
+      const onReset = (): void => this.resetCaptionStyle();
+      reset.addEventListener('click', onReset);
+      this.addDisposer(() => reset.removeEventListener('click', onReset));
+      content.appendChild(reset);
+    } else {
+      // Value list for the drilled-in property: a check on the active value.
+      const values = CAPTION_STYLE_OPTIONS[subKey] ?? [];
+      const current = this._captionStyle[subKey];
+      for (const option of values) {
+        const item = document.createElement('button');
+        item.setAttribute('type', 'button');
+        item.setAttribute('part', 'submenu-item');
+        item.setAttribute('data-value', option.value);
+        item.textContent = (option.value === current ? '\u2713 ' : '') + option.label;
+        if (option.value === current) {
+          item.setAttribute('data-active', 'true');
+        }
+        const onSelect = (): void => this.selectCaptionStyle(subKey, option.value);
+        item.addEventListener('click', onSelect);
+        this.addDisposer(() => item.removeEventListener('click', onSelect));
+        content.appendChild(item);
+      }
+    }
+
+    this.captionOptionsPanel.appendChild(content);
+  }
+
+  /**
+   * Resolves the current-value LABEL shown on a caption-style property row (parity with the
+   * original `getCurrentLabel`): the matching option's label, or the raw stored value.
+   */
+  private captionStyleValueLabel(key: keyof CaptionStyleOptions): string {
+    const values = CAPTION_STYLE_OPTIONS[key] ?? [];
+    const current = this._captionStyle[key];
+    const match = values.find((option) => option.value === current);
+    return match?.label ?? String(current);
   }
 
   /**
@@ -556,6 +928,8 @@ export class PlayerstackSettings extends PlayerstackElement {
    * menu open, clears the category selection, and re-renders so the main rows show again.
    */
   private goBackToMenu(): void {
+    this.captionOptionsOpen = false;
+    this.captionStyleSubKey = null;
     this.uiState = { ...settingsInitialState, generalMenu: true };
     this.renderPanels();
   }
@@ -569,13 +943,21 @@ export class PlayerstackSettings extends PlayerstackElement {
     if (this.submenu === null) {
       return;
     }
-    const openCategory = this.uiState.speed ? SPEED_KEY : this.uiState.quality ? QUALITY_KEY : null;
+    const openCategory = this.uiState.speed
+      ? SPEED_KEY
+      : this.uiState.quality
+        ? QUALITY_KEY
+        : this.uiState.captions
+          ? CAPTIONS_KEY
+          : null;
     const activeValue =
       openCategory === SPEED_KEY
         ? String(this.playbackRate)
         : openCategory === QUALITY_KEY
           ? String(this.playbackQuality ?? 0)
-          : null;
+          : openCategory === CAPTIONS_KEY
+            ? (this._activeCaption ?? CAPTION_OFF)
+            : null;
 
     const items = this.submenu.querySelectorAll('[part="submenu-item"]');
     items.forEach((node) => {

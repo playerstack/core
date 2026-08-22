@@ -37,10 +37,25 @@ import type {
 } from '@typings/ui/playerstack-double-tap.types';
 import type { SeekRequestDetail } from '@typings/ui/media-controller.types';
 import type { MediaStoreState } from '@typings/ui/media-store.types';
+import type { Translations } from '@i18n/index';
 import { PlayerstackElement } from '@ui/playerstack-element';
 import { DoubleTapController } from '@double-tap-controller';
+import { renderSvgFromDescriptor } from '@ui/icon-render';
+import { mobileSkipChevronIcon } from '@icons/mobile/index';
+import { getTranslations } from '@i18n/index';
+
+/** Default language applied when no `language` attribute is provided. */
+const DEFAULT_LANGUAGE = 'en';
 
 export class PlayerstackDoubleTap extends PlayerstackElement {
+  /**
+   * Declares `language` as an observed attribute so the skip indicator's "seconds" label is
+   * localizable via markup (parity with the original SkipOverlay `{seconds} {i18n.seconds}`).
+   */
+  static override attributeSchema = {
+    language: { attribute: 'language', type: 'string' },
+  } as const;
+
   /**
    * The owned headless double-tap controller (Req 1.6). Instantiated eagerly since it is a
    * plain state machine with no adapter dependency; recreated by the `config` setter and torn
@@ -48,8 +63,14 @@ export class PlayerstackDoubleTap extends PlayerstackElement {
    */
   private controller = new DoubleTapController();
 
-  /** The rendered skip indicator whose text mirrors the controller's accumulated seconds. */
+  /** The rendered skip indicator container (holds the chevron glyphs + the seconds text). */
   private skipIndicator: HTMLElement | null = null;
+
+  /** The rendered seconds text region inside the indicator ("N seconds"). */
+  private skipText: HTMLElement | null = null;
+
+  /** Resolved translations for the "seconds" label; re-resolved on language change. */
+  private translations: Translations = getTranslations(DEFAULT_LANGUAGE);
 
   /**
    * Reconfigures the owned controller with a new `DoubleTapConfig`. The controller has no
@@ -96,15 +117,36 @@ export class PlayerstackDoubleTap extends PlayerstackElement {
     right.addEventListener('click', onRight);
     this.addDisposer(() => right.removeEventListener('click', onRight));
 
+    // Seed translations from any `language` attribute set before connect.
+    this.translations = getTranslations(this.getAttribute('language') ?? DEFAULT_LANGUAGE);
+
     const indicatorPart: DoubleTapPart = 'skip-indicator';
     const skipIndicator = document.createElement('div');
     skipIndicator.setAttribute('part', indicatorPart);
+
+    // Three animated chevron glyphs (parity with the original SkipOverlay: three
+    // `mobileSkipChevronIcon`s pointing in the skip direction), then the "N seconds" text.
+    const icons = document.createElement('div');
+    icons.setAttribute('part', 'skip-indicator-icons');
+    for (let i = 0; i < 3; i++) {
+      const chevron = document.createElement('span');
+      chevron.className = 'icon icon-skip-chevron';
+      chevron.innerHTML = renderSvgFromDescriptor(mobileSkipChevronIcon);
+      icons.appendChild(chevron);
+    }
+
+    const skipText = document.createElement('span');
+    skipText.setAttribute('part', 'skip-indicator-text');
+
+    skipIndicator.appendChild(icons);
+    skipIndicator.appendChild(skipText);
 
     overlay.appendChild(left);
     overlay.appendChild(right);
     overlay.appendChild(skipIndicator);
 
     this.skipIndicator = skipIndicator;
+    this.skipText = skipText;
 
     this.wireController();
 
@@ -153,13 +195,27 @@ export class PlayerstackDoubleTap extends PlayerstackElement {
    * host so the Style_Layer can show/hide and orient the indicator (Req 3.3).
    */
   private applySkipState(state: DoubleTapSkipState): void {
-    if (this.skipIndicator !== null) {
-      this.skipIndicator.textContent = state.visible ? `${state.seconds}` : '';
+    // Write ONLY the text region ("N seconds") so the chevron glyphs are preserved (setting
+    // `textContent` on the whole indicator would wipe them). Parity with the original
+    // `{seconds} {i18n.seconds}` readout; empty while hidden.
+    if (this.skipText !== null) {
+      const secondsLabel = this.translations.seconds ?? 'seconds';
+      this.skipText.textContent = state.visible ? `${state.seconds} ${secondsLabel}` : '';
     }
     this.reflectState({
       active: state.visible ? true : null,
       direction: state.visible ? state.direction : null,
     });
+  }
+
+  /**
+   * Re-resolves the "seconds" label when the `language` attribute changes (parity with the other
+   * i18n elements); repaints the current text region if visible.
+   */
+  protected override onAttributeChanged(propKey: string, value: string | number | boolean): void {
+    if (propKey === 'language' && typeof value === 'string') {
+      this.translations = getTranslations(value);
+    }
   }
 
   /**

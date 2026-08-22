@@ -27,12 +27,31 @@
  */
 import type { LiveIndicatorPart, LiveIndicatorDVRState } from '@typings/ui/playerstack-live-indicator.types';
 import type { SeekRequestDetail } from '@typings/ui/media-controller.types';
+import type { Translations } from '@i18n/index';
 import { PlayerstackElement } from '@ui/playerstack-element';
 import { formatLiveOffset } from '@live-dvr';
+import { getTranslations } from '@i18n/index';
+
+/** Default language applied when no `language` attribute is provided. */
+const DEFAULT_LANGUAGE = 'en';
 
 export class PlayerstackLiveIndicator extends PlayerstackElement {
+  /**
+   * Declares `language` as an observed attribute so the "Live" label is localizable via markup
+   * (parity with the original mobile badge showing `i18n.live`).
+   */
+  static override attributeSchema = {
+    language: { attribute: 'language', type: 'string' },
+  } as const;
+
+  /** Resolved translations for the "Live" label; re-resolved on language change. */
+  private translations: Translations = getTranslations('en');
+
   /** The rendered indicator container; kept so `render` stays idempotent across reconnects. */
   private indicator: HTMLElement | null = null;
+
+  /** The rendered "Live" label region (parity with the original badge text). */
+  private label: HTMLElement | null = null;
 
   /** The rendered offset text region whose content mirrors the formatted live offset. */
   private offset: HTMLElement | null = null;
@@ -55,6 +74,19 @@ export class PlayerstackLiveIndicator extends PlayerstackElement {
   }
 
   /**
+   * Re-resolves the "Live" label when the `language` attribute changes (parity with the other
+   * i18n elements), repainting the label region immediately.
+   */
+  protected override onAttributeChanged(propKey: string, value: string | number | boolean): void {
+    if (propKey === 'language' && typeof value === 'string') {
+      this.translations = getTranslations(value);
+      if (this.label !== null) {
+        this.label.textContent = this.translations.live ?? 'Live';
+      }
+    }
+  }
+
+  /**
    * Builds the Markup_Contract: a `part="live-indicator"` container holding a `part="live-dot"`
    * status dot and a `part="live-offset"` text region. Nodes are created and APPENDED (never
    * via `innerHTML`) so the adopted Style_Layer survives. A guard keeps `render` idempotent
@@ -72,9 +104,18 @@ export class PlayerstackLiveIndicator extends PlayerstackElement {
     const indicator = document.createElement('div');
     indicator.setAttribute('part', indicatorPart);
 
+    // Seed translations from any `language` attribute set before connect.
+    this.translations = getTranslations(this.getAttribute('language') ?? DEFAULT_LANGUAGE);
+
     const dotPart: LiveIndicatorPart = 'live-dot';
     const dot = document.createElement('span');
     dot.setAttribute('part', dotPart);
+
+    // "Live" text label (parity with the original badge). Localized via the `language` attribute.
+    const labelPart: LiveIndicatorPart = 'live-label';
+    const label = document.createElement('span');
+    label.setAttribute('part', labelPart);
+    label.textContent = this.translations.live ?? 'Live';
 
     const offsetPart: LiveIndicatorPart = 'live-offset';
     const offset = document.createElement('span');
@@ -88,9 +129,11 @@ export class PlayerstackLiveIndicator extends PlayerstackElement {
     this.addDisposer(() => indicator.removeEventListener('click', onClick));
 
     indicator.appendChild(dot);
+    indicator.appendChild(label);
     indicator.appendChild(offset);
 
     this.indicator = indicator;
+    this.label = label;
     this.offset = offset;
 
     // Append (never clobber) so the adopted Style_Layer / fallback `<style>` survives.

@@ -28,4 +28,10 @@ export type DoubleTapSkipState = SkipState;
  *   - `skip-indicator` shows the accumulated skip seconds; it carries the reflected
  *     `data-active`/`data-direction` state so the Style_Layer can show/hide and orient it.
  */
-export type DoubleTapPart = 'double-tap' | 'double-tap-left' | 'double-tap-right' | 'skip-indicator';
+export type DoubleTapPart =
+  | 'double-tap'
+  | 'double-tap-left'
+  | 'double-tap-right'
+  | 'skip-indicator'
+  | 'skip-indicator-icons'
+  | 'skip-indicator-text';

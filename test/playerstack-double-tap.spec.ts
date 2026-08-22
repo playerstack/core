@@ -66,8 +66,11 @@ describe('playerstack-double-tap', () => {
       expect(el.getAttribute('data-active')).toBe('true');
       // `reflectStateToAttributes` JSON-encodes values, so the string direction is quoted.
       expect(el.getAttribute('data-direction')).toBe('"forward"');
-      const indicator = (el).querySelector('[part="skip-indicator"]');
-      expect(indicator?.textContent).toBe('10');
+      // The indicator now shows the accumulated seconds + the localized "seconds" label in a
+      // dedicated text region (parity with the original SkipOverlay `{seconds} {i18n.seconds}`),
+      // alongside the chevron glyphs.
+      const indicatorText = (el).querySelector('[part="skip-indicator-text"]');
+      expect(indicatorText?.textContent).toBe('10 seconds');
     });
 
     it('skips backward on double-tap left, emitting a seek at seek - skipSeconds', () => {

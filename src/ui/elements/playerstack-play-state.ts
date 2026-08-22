@@ -18,6 +18,7 @@ import type { MediaStoreState } from '@typings/ui/media-store.types';
 import { PlayerstackElement } from '@ui/playerstack-element';
 import { renderSvgFromDescriptor } from '@ui/icon-render';
 import { playIcon, pauseIcon, replayIcon } from '@icons/index';
+import { mobilePlayIcon, mobilePauseIcon } from '@icons/mobile/index';
 
 /** Default accessible name used when no `aria-label` attribute is provided (Req 1.5). */
 const DEFAULT_LABEL: PlayStateDefaultLabel = 'Play';
@@ -105,9 +106,23 @@ export class PlayerstackPlayState extends PlayerstackElement {
     const iconReplay = document.createElement('span');
     iconReplay.className = 'icon icon-replay';
     iconReplay.innerHTML = renderSvgFromDescriptor(replayIcon);
+    // Mobile glyph variants (BOLDER/LARGER than the desktop play/pause per the original mobile
+    // skin, which used `mobilePlayIcon`/`mobilePauseIcon` — 56-viewBox 8px bars vs the desktop
+    // 36-viewBox 3px bars). Both sets are rendered; the Style_Layer shows the desktop glyphs by
+    // default and swaps to these under `playerstack-media-controller[data-skin-mode='mobile']`,
+    // keeping this element skin-agnostic (it only provides both, the CSS chooses). Ended still
+    // uses the shared replay glyph (there is no mobile-specific replay icon).
+    const iconPlayMobile = document.createElement('span');
+    iconPlayMobile.className = 'icon icon-play-mobile';
+    iconPlayMobile.innerHTML = renderSvgFromDescriptor(mobilePlayIcon);
+    const iconPauseMobile = document.createElement('span');
+    iconPauseMobile.className = 'icon icon-pause-mobile';
+    iconPauseMobile.innerHTML = renderSvgFromDescriptor(mobilePauseIcon);
     button.appendChild(iconPlay);
     button.appendChild(iconPause);
     button.appendChild(iconReplay);
+    button.appendChild(iconPlayMobile);
+    button.appendChild(iconPauseMobile);
 
     // Emit intent via a request event; the current `playing` state decides which (Req 2.1).
     const onClick = (): void => {

@@ -59,8 +59,14 @@ export interface AdsConfig {
   onAdClick?: () => void;
   /** Called when the ad video completes (reaches end). */
   onAdComplete?: () => void;
-  /** Click-through URL opened when ad is clicked. */
+  /** Click-through URL opened when ad is clicked. Also shown (hostname) in the ad banner. */
   url?: string;
+  /** Ad banner title (the advertiser/ad name). Shown in the bottom-left ad banner. */
+  title?: string;
+  /** Ad banner call-to-action button label (e.g. "Visit site"). */
+  buttonText?: string;
+  /** Optional ad banner thumbnail/icon URL shown left of the title. */
+  icon?: string;
 }
 
 /**

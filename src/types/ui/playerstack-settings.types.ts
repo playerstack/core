@@ -35,7 +35,20 @@ export type SettingsPart =
   | 'submenu-header'
   | 'submenu-back'
   | 'submenu-content'
-  | 'hd-badge';
+  | 'hd-badge'
+  // Caption STYLE config panel (parity with the original desktop `CaptionOptions`), reached via
+  // the "Options" affordance in the Captions submenu header. It is a SEPARATE two-level panel:
+  // `caption-options` is the panel container, `caption-options-header` holds the back button +
+  // an "Options" link, `caption-options-item` is a style row (label + current value + chevron),
+  // `caption-options-label`/`caption-options-value` are its left/right parts, and
+  // `caption-options-content` wraps the value list of the drilled-in style property.
+  | 'submenu-options'
+  | 'caption-options'
+  | 'caption-options-header'
+  | 'caption-options-content'
+  | 'caption-options-item'
+  | 'caption-options-label'
+  | 'caption-options-value';
 
 /**
  * Default accessible name applied to the settings button when the consumer does not set
@@ -56,6 +69,17 @@ export interface SettingsQualityOption {
 }
 
 /**
+ * Public caption-track shape accepted through the element's `captions` setter. Mirrors the
+ * `{ src, label, language }` track descriptors the reactjs skin feeds elsewhere; only `label`
+ * (shown in the language list) and `language` (the selection `value`) are used here.
+ */
+export interface SettingsCaptionTrack {
+  label: string;
+  language: string;
+  src?: string;
+}
+
+/**
  * Minimal i18n label bag the element accepts. Every field is optional; missing fields
  * fall back to the English defaults so the element renders correct labels with no i18n
  * provided (Req 1.5). Extra keys are tolerated to stay forward-compatible with the wider
@@ -66,5 +90,21 @@ export interface SettingsI18n {
   quality?: string;
   auto?: string;
   normal?: string;
+  // Caption labels (parity with the original desktop settings + `CaptionOptions`): the Captions
+  // category title, the "Off" row, the "Options" affordance, the nine style-property labels and
+  // the "Reset" row. All optional so missing keys fall back to the English defaults.
+  captions?: string;
+  off?: string;
+  captionOptions?: string;
+  fontFamily?: string;
+  fontColor?: string;
+  fontSize?: string;
+  fontOpacity?: string;
+  backgroundColor?: string;
+  backgroundOpacity?: string;
+  windowColor?: string;
+  windowOpacity?: string;
+  edgeStyle?: string;
+  reset?: string;
   [key: string]: string | undefined;
 }

@@ -397,5 +397,242 @@ describe('playerstack-settings', () => {
       (el as unknown as { i18n: typeof i18n | null }).i18n = null;
       expect((el as unknown as { i18n: typeof i18n | null }).i18n).toBeNull();
     });
+
+    it('resolves the FULL localized dictionary from the i18n `language` field', () => {
+      const { el } = mount();
+      // The Skin passes only `{ language }`; the element must resolve the full es dictionary so
+      // the menu labels localize (parity with the original `useAppSelector().i18n`).
+      (el as unknown as { i18n: { language: string } }).i18n = { language: 'es' };
+      const root = el;
+      (root.querySelector('[part="settings-button"]') as HTMLButtonElement).click();
+      const speedTitle = root.querySelector(
+        '[part="menu-item"][data-category="speed"] [part="menu-item-title"]',
+      ) as HTMLElement;
+      expect(speedTitle.textContent).toBe('Velocidad');
+    });
+  });
+
+  // ── Captions category + caption STYLE "Options" panel (parity with the original desktop
+  // settings Captions entry + `CaptionOptions`). Feeds tracks/activeCaption/captionStyle and
+  // asserts the language selection + style requests + navigation.
+  describe('captions category (parity: desktop settings Captions)', () => {
+    const TRACKS = [
+      { label: 'English', language: 'en', src: 'en.vtt' },
+      { label: 'Español', language: 'es', src: 'es.vtt' },
+    ];
+
+    /** Sets tracks and opens the Captions submenu; returns the settings root. */
+    function openCaptions(el: HTMLElement): HTMLElement {
+      (el as unknown as { captions: typeof TRACKS }).captions = TRACKS;
+      const gear = el.querySelector('[part="settings-button"]') as HTMLButtonElement;
+      gear.click();
+      const captions = Array.from(el.querySelectorAll('[part="menu-item"]')).find(
+        (item) => (item as HTMLElement).getAttribute('data-category') === 'captions',
+      ) as HTMLButtonElement;
+      captions.click();
+      return el;
+    }
+
+    it('renders a Captions main row when tracks are provided and shows the current value', () => {
+      const { el } = mount();
+      (el as unknown as { captions: typeof TRACKS }).captions = TRACKS;
+      const gear = (el).querySelector('[part="settings-button"]') as HTMLButtonElement;
+      gear.click();
+      const row = (el).querySelector('[part="menu-item"][data-category="captions"]') as HTMLElement;
+      expect(row).not.toBeNull();
+      const value = row.querySelector('[part="menu-item-value"]') as HTMLElement;
+      // No active caption -> "Off".
+      expect(value.textContent).toBe('Off');
+    });
+
+    it('shows the active track label in the Captions main row', () => {
+      const { el } = mount();
+      (el as unknown as { captions: typeof TRACKS; activeCaption: string }).captions = TRACKS;
+      (el as unknown as { activeCaption: string }).activeCaption = 'es';
+      const gear = (el).querySelector('[part="settings-button"]') as HTMLButtonElement;
+      gear.click();
+      const row = (el).querySelector('[part="menu-item"][data-category="captions"]') as HTMLElement;
+      expect(row.querySelector('[part="menu-item-value"]')?.textContent).toBe('Español');
+    });
+
+    it('renders an Off row plus one row per track in the Captions submenu', () => {
+      const { el } = mount();
+      openCaptions(el);
+      const items = Array.from((el).querySelectorAll('[part="submenu-item"]')) as HTMLElement[];
+      const labels = items.map((i) => i.textContent);
+      expect(labels).toEqual(['Off', 'English', 'Español']);
+    });
+
+    it('emits playerstack-caption-request with the track language on selection', () => {
+      const { el } = mount();
+      openCaptions(el);
+
+      const received: Array<CustomEvent<{ value: string | null }>> = [];
+      document.addEventListener('playerstack-caption-request', (e) =>
+        received.push(e as CustomEvent<{ value: string | null }>),
+      );
+
+      const es = Array.from((el).querySelectorAll('[part="submenu-item"]')).find(
+        (i) => (i as HTMLElement).getAttribute('data-value') === 'es',
+      ) as HTMLButtonElement;
+      es.click();
+
+      expect(received).toHaveLength(1);
+      expect(received[0]?.detail.value).toBe('es');
+      expect(received[0]?.composed).toBe(true);
+    });
+
+    it('emits playerstack-caption-request with null when Off is selected', () => {
+      const { el } = mount();
+      openCaptions(el);
+
+      const received: Array<CustomEvent<{ value: string | null }>> = [];
+      document.addEventListener('playerstack-caption-request', (e) =>
+        received.push(e as CustomEvent<{ value: string | null }>),
+      );
+
+      const off = Array.from((el).querySelectorAll('[part="submenu-item"]')).find(
+        (i) => (i as HTMLElement).getAttribute('data-value') === 'off',
+      ) as HTMLButtonElement;
+      off.click();
+
+      expect(received).toHaveLength(1);
+      expect(received[0]?.detail.value).toBeNull();
+    });
+
+    it('mirrors the active caption from the store (CC quick-toggle sync)', () => {
+      const { host, el } = mount();
+      (el as unknown as { captions: typeof TRACKS }).captions = TRACKS;
+      host.store.set({ activeCaption: 'en' });
+      const gear = (el).querySelector('[part="settings-button"]') as HTMLButtonElement;
+      gear.click();
+      const row = (el).querySelector('[part="menu-item"][data-category="captions"]') as HTMLElement;
+      expect(row.querySelector('[part="menu-item-value"]')?.textContent).toBe('English');
+    });
+
+    it('marks the active caption submenu-item (Off when none active)', () => {
+      const { el } = mount();
+      openCaptions(el);
+      const active = (el).querySelector('[part="submenu-item"][data-active="true"]') as HTMLElement;
+      expect(active?.getAttribute('data-value')).toBe('off');
+    });
+  });
+
+  describe('caption STYLE "Options" panel (parity: CaptionOptions)', () => {
+    const TRACKS = [{ label: 'English', language: 'en', src: 'en.vtt' }];
+
+    /** Opens the Captions submenu then the style "Options" panel; returns the root. */
+    function openOptions(el: HTMLElement): HTMLElement {
+      (el as unknown as { captions: typeof TRACKS }).captions = TRACKS;
+      (el.querySelector('[part="settings-button"]') as HTMLButtonElement).click();
+      (
+        Array.from(el.querySelectorAll('[part="menu-item"]')).find(
+          (i) => (i as HTMLElement).getAttribute('data-category') === 'captions',
+        ) as HTMLButtonElement
+      ).click();
+      (el.querySelector('[part="submenu-options"]') as HTMLButtonElement).click();
+      return el;
+    }
+
+    it('shows an "Options" affordance in the Captions submenu header', () => {
+      const { el } = mount();
+      (el as unknown as { captions: typeof TRACKS }).captions = TRACKS;
+      (el.querySelector('[part="settings-button"]') as HTMLButtonElement).click();
+      (
+        Array.from(el.querySelectorAll('[part="menu-item"]')).find(
+          (i) => (i as HTMLElement).getAttribute('data-category') === 'captions',
+        ) as HTMLButtonElement
+      ).click();
+      const link = el.querySelector('[part="submenu-options"]') as HTMLElement;
+      expect(link).not.toBeNull();
+      expect(link.textContent).toBe('Options');
+    });
+
+    it('opens the caption-options panel (reflects data-caption-options) with 9 style rows + Reset', () => {
+      const { el } = mount();
+      openOptions(el);
+      expect(el.getAttribute('data-caption-options')).toBe('true');
+      const rows = Array.from(el.querySelectorAll('[part="caption-options-item"]')) as HTMLElement[];
+      // 9 style properties + Reset.
+      expect(rows).toHaveLength(10);
+      expect(rows[rows.length - 1]?.getAttribute('data-key')).toBe('reset');
+    });
+
+    it('shows each style property current value label', () => {
+      const { el } = mount();
+      openOptions(el);
+      const fontColor = el.querySelector('[part="caption-options-item"][data-key="fontColor"]') as HTMLElement;
+      const value = fontColor.querySelector('[part="caption-options-value"]') as HTMLElement;
+      // Default fontColor #ffffff -> "White".
+      expect(value.textContent).toContain('White');
+    });
+
+    it('drills into a style property and emits playerstack-caption-style-request on value select', () => {
+      const { el } = mount();
+      openOptions(el);
+
+      // Drill into Font color.
+      (el.querySelector('[part="caption-options-item"][data-key="fontColor"]') as HTMLButtonElement).click();
+
+      const received: Array<CustomEvent<{ style: { fontColor: string } }>> = [];
+      document.addEventListener('playerstack-caption-style-request', (e) =>
+        received.push(e as CustomEvent<{ style: { fontColor: string } }>),
+      );
+
+      // Pick Yellow (#ffff00).
+      const yellow = Array.from(el.querySelectorAll('[part="submenu-item"]')).find(
+        (i) => (i as HTMLElement).getAttribute('data-value') === '#ffff00',
+      ) as HTMLButtonElement;
+      yellow.click();
+
+      expect(received).toHaveLength(1);
+      expect(received[0]?.detail.style.fontColor).toBe('#ffff00');
+      expect(received[0]?.composed).toBe(true);
+    });
+
+    it('Reset emits the default caption style', () => {
+      const { el } = mount();
+      // Seed a non-default style so Reset is observable.
+      (el as unknown as { captionStyle: { fontColor: string } }).captionStyle = { fontColor: '#ff0000' } as never;
+      openOptions(el);
+
+      const received: Array<CustomEvent<{ style: { fontColor: string } }>> = [];
+      document.addEventListener('playerstack-caption-style-request', (e) =>
+        received.push(e as CustomEvent<{ style: { fontColor: string } }>),
+      );
+
+      (el.querySelector('[part="caption-options-item"][data-key="reset"]') as HTMLButtonElement).click();
+
+      expect(received).toHaveLength(1);
+      // Default fontColor is white.
+      expect(received[0]?.detail.style.fontColor).toBe('#ffffff');
+    });
+
+    it('back from a style property returns to the style list; back again closes the panel', () => {
+      const { el } = mount();
+      openOptions(el);
+
+      // Drill into a property.
+      (el.querySelector('[part="caption-options-item"][data-key="fontSize"]') as HTMLButtonElement).click();
+      // A value list is shown (submenu-items inside the caption-options panel).
+      expect(el.querySelector('[part="caption-options"] [part="submenu-item"]')).not.toBeNull();
+
+      // Back -> style list again.
+      (el.querySelector('[part="caption-options"] [part="submenu-back"]') as HTMLButtonElement).click();
+      expect(el.querySelectorAll('[part="caption-options-item"]').length).toBe(10);
+
+      // Back -> closes the style panel (returns to the Captions submenu).
+      (el.querySelector('[part="caption-options"] [part="submenu-back"]') as HTMLButtonElement).click();
+      expect(el.getAttribute('data-caption-options')).toBeNull();
+    });
+
+    it('closing the settings menu clears the caption-options panel', () => {
+      const { el } = mount();
+      openOptions(el);
+      expect(el.getAttribute('data-caption-options')).toBe('true');
+      // Toggle the gear to close.
+      (el.querySelector('[part="settings-button"]') as HTMLButtonElement).click();
+      expect(el.getAttribute('data-caption-options')).toBeNull();
+    });
   });
 });

@@ -14,7 +14,7 @@ import type { VTTCue } from '@typings/utils/captions.types';
  *   - `captions` is the overlay container; it carries the reflected `data-active` state.
  *   - `cue` is the text region that receives the active cue text on every store change.
  */
-export type CaptionsPart = 'captions' | 'cue';
+export type CaptionsPart = 'captions' | 'caption-window' | 'cue';
 
 /**
  * Caption source the consumer/adapter supplies. The overlay accepts either a raw VTT string

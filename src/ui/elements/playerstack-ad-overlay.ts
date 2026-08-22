@@ -38,8 +38,13 @@ import type {
 } from '@typings/ui/playerstack-ad-overlay.types';
 import type { AdsState } from '@typings/ads-controller.types';
 import type { MediaStoreState } from '@typings/ui/media-store.types';
+import type { Translations } from '@i18n/index';
 import { PlayerstackElement } from '@ui/playerstack-element';
 import { AdsController } from '@ads-controller';
+import { getTranslations } from '@i18n/index';
+
+/** Default language used until the consumer sets one (parity with the other i18n elements). */
+const DEFAULT_LANGUAGE = 'en';
 
 /** Default accessible name used when no `aria-label` attribute is provided (Req 1.5). */
 const DEFAULT_LABEL: AdOverlayDefaultLabel = 'Skip ad';
@@ -52,6 +57,7 @@ export class PlayerstackAdOverlay extends PlayerstackElement {
    */
   static override attributeSchema = {
     label: { attribute: 'aria-label', type: 'string' },
+    language: { attribute: 'language', type: 'string' },
   } as const;
 
   /**
@@ -72,14 +78,48 @@ export class PlayerstackAdOverlay extends PlayerstackElement {
   /** The rendered skip button; kept so its label/state can be updated after render. */
   private skipButton: HTMLButtonElement | null = null;
 
+  /** Latest ad config; drives the banner (title/url/buttonText/icon). `null` = no ad. */
+  private _ads: AdOverlayAdsConfig | null = null;
+
+  /** Resolved translations for the banner's "Sponsored" label; re-resolved on language change. */
+  private translations: Translations = getTranslations(DEFAULT_LANGUAGE);
+
+  /** Rendered banner nodes, kept so `updateBanner` can repaint without rebuilding the DOM. */
+  private bannerWrapper: HTMLElement | null = null;
+  private bannerIcon: HTMLImageElement | null = null;
+  private bannerTitle: HTMLElement | null = null;
+  private bannerUrl: HTMLElement | null = null;
+  private bannerButton: HTMLElement | null = null;
+  private bannerSponsored: HTMLElement | null = null;
+
   /**
    * Configures the owned controller with an ad config (or `null` to deactivate). Public
    * property so consumers/adapters attach ads the same way as the rest of Core; delegates to
-   * the controller, which resets its internal state on (re)configure.
+   * the controller, which resets its internal state on (re)configure. ALSO stores the config so
+   * the ad BANNER (title / hostname / call-to-action button / icon) can be painted — parity with
+   * the original AdsOverlay, which rendered that banner bottom-left during an ad.
    */
   set ads(config: AdOverlayAdsConfig | null) {
     this.notifiedPlay = false;
+    this._ads = config;
     this.controller.configure(config);
+    this.updateBanner();
+  }
+
+  get ads(): AdOverlayAdsConfig | null {
+    return this._ads;
+  }
+
+  /**
+   * Re-resolves the banner translations when the `language` attribute changes and repaints the
+   * banner so the "Sponsored" label reflects the new language immediately (parity with the other
+   * i18n elements, e.g. `playerstack-prevented-tip`).
+   */
+  protected override onAttributeChanged(propKey: string, value: string | number | boolean): void {
+    if (propKey === 'language' && typeof value === 'string') {
+      this.translations = getTranslations(value);
+      this.updateBanner();
+    }
   }
 
   /**
@@ -115,6 +155,9 @@ export class PlayerstackAdOverlay extends PlayerstackElement {
     if (this.overlay !== null) {
       return;
     }
+
+    // Seed translations from any `language` attribute set before connect.
+    this.translations = getTranslations(this.getAttribute('language') ?? DEFAULT_LANGUAGE);
 
     const overlayPart: AdOverlayPart = 'ad-overlay';
     const overlay = document.createElement('div');
@@ -152,11 +195,65 @@ export class PlayerstackAdOverlay extends PlayerstackElement {
     skipButton.addEventListener('click', onSkipClick);
     this.addDisposer(() => skipButton.removeEventListener('click', onSkipClick));
 
+    // Ad BANNER (parity with the original AdsOverlay bottom-left gadget): a clickable card with
+    // an optional icon, the ad title + click-through hostname, and a call-to-action button, plus
+    // a "Sponsored · host" label beneath it. Click routes through the same ad-click handler as
+    // the click region. Nodes are created here and repainted by `updateBanner`; hidden until an
+    // ad config is present.
+    const bannerWrapper = document.createElement('div');
+    bannerWrapper.setAttribute('part', 'ad-banner-wrapper' satisfies AdOverlayPart);
+
+    const banner = document.createElement('div');
+    banner.setAttribute('part', 'ad-banner' satisfies AdOverlayPart);
+    banner.setAttribute('role', 'link');
+    const onBannerClick = (): void => {
+      this.controller.onAdClick();
+      this.dispatchRequest('playerstack-ad-click');
+    };
+    banner.addEventListener('click', onBannerClick);
+    this.addDisposer(() => banner.removeEventListener('click', onBannerClick));
+
+    const bannerIcon = document.createElement('img');
+    bannerIcon.setAttribute('part', 'ad-icon' satisfies AdOverlayPart);
+    bannerIcon.alt = '';
+    bannerIcon.style.display = 'none';
+
+    const bannerInfo = document.createElement('div');
+    bannerInfo.setAttribute('part', 'ad-info' satisfies AdOverlayPart);
+    const bannerTitle = document.createElement('span');
+    bannerTitle.setAttribute('part', 'ad-title' satisfies AdOverlayPart);
+    const bannerUrl = document.createElement('span');
+    bannerUrl.setAttribute('part', 'ad-url' satisfies AdOverlayPart);
+    bannerInfo.appendChild(bannerTitle);
+    bannerInfo.appendChild(bannerUrl);
+
+    const bannerButton = document.createElement('button');
+    bannerButton.setAttribute('part', 'ad-button' satisfies AdOverlayPart);
+    bannerButton.setAttribute('type', 'button');
+
+    banner.appendChild(bannerIcon);
+    banner.appendChild(bannerInfo);
+    banner.appendChild(bannerButton);
+
+    const bannerSponsored = document.createElement('span');
+    bannerSponsored.setAttribute('part', 'ad-sponsored' satisfies AdOverlayPart);
+
+    bannerWrapper.appendChild(banner);
+    bannerWrapper.appendChild(bannerSponsored);
+
+    overlay.appendChild(bannerWrapper);
     overlay.appendChild(clickRegion);
     overlay.appendChild(skipButton);
 
     this.overlay = overlay;
     this.skipButton = skipButton;
+    this.bannerWrapper = bannerWrapper;
+    this.bannerIcon = bannerIcon;
+    this.bannerTitle = bannerTitle;
+    this.bannerUrl = bannerUrl;
+    this.bannerButton = bannerButton;
+    this.bannerSponsored = bannerSponsored;
+    this.updateBanner();
 
     this.wireController();
 
@@ -229,6 +326,63 @@ export class PlayerstackAdOverlay extends PlayerstackElement {
     this.skipButton.textContent = canSkip ? DEFAULT_LABEL : String(skipCountdown);
     // camelCase key so the pure reflector maps `canSkip` -> `data-can-skip` (Req 3.3).
     this.reflectState({ canSkip });
+  }
+
+  /**
+   * Paints the ad banner from the current `_ads` config (parity with the original AdsOverlay):
+   * the title, the click-through hostname (derived from `url`), the call-to-action button label
+   * and the optional icon, plus the "Sponsored · host" label. When there is no config (or no
+   * title) the banner is hidden so a bare skip affordance still works. Safe to call before the
+   * DOM exists (guards on the refs) and re-runnable without rebuilding nodes.
+   */
+  private updateBanner(): void {
+    if (this.bannerWrapper === null) {
+      return;
+    }
+    const config = this._ads;
+    // Show the banner only when the ad provides a TITLE (parity with the original, whose banner
+    // was the advertiser name). A url-only config would otherwise render an empty title span next
+    // to the hostname, so gate on `title` presence and hide the banner when it is absent.
+    if (config === null || config.title === undefined || config.title === '') {
+      this.bannerWrapper.style.display = 'none';
+      return;
+    }
+    this.bannerWrapper.style.display = '';
+
+    // Derive the display hostname from the click-through URL (fallback to the raw string).
+    let host = config.url ?? '';
+    if (config.url !== undefined) {
+      try {
+        host = new URL(config.url).hostname;
+      } catch {
+        host = config.url;
+      }
+    }
+
+    if (this.bannerTitle !== null) {
+      this.bannerTitle.textContent = config.title ?? '';
+    }
+    if (this.bannerUrl !== null) {
+      this.bannerUrl.textContent = host;
+    }
+    if (this.bannerButton !== null) {
+      this.bannerButton.textContent = config.buttonText ?? '';
+      this.bannerButton.style.display = config.buttonText ? '' : 'none';
+    }
+    if (this.bannerIcon !== null) {
+      if (config.icon !== undefined && config.icon !== '') {
+        this.bannerIcon.src = config.icon;
+        this.bannerIcon.style.display = '';
+      } else {
+        this.bannerIcon.removeAttribute('src');
+        this.bannerIcon.style.display = 'none';
+      }
+    }
+    if (this.bannerSponsored !== null) {
+      const sponsored = this.translations.sponsored ?? 'Sponsored';
+      // "Sponsored · host" (parity with the original `{sponsored} • {host}`).
+      this.bannerSponsored.textContent = host ? `${sponsored} \u2022 ${host}` : sponsored;
+    }
   }
 
   /**

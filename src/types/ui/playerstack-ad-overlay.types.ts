@@ -28,7 +28,18 @@ export type AdOverlayAdsConfig = AdsConfig;
  * `playerstack-time-slider` tinted yellow in ad mode (parity with the original, which had a
  * single timeline), so this overlay does not paint its own progress indicator.
  */
-export type AdOverlayPart = 'ad-overlay' | 'ad-skip-button' | 'ad-click';
+export type AdOverlayPart =
+  | 'ad-overlay'
+  | 'ad-skip-button'
+  | 'ad-click'
+  | 'ad-banner-wrapper'
+  | 'ad-banner'
+  | 'ad-icon'
+  | 'ad-info'
+  | 'ad-title'
+  | 'ad-url'
+  | 'ad-button'
+  | 'ad-sponsored';
 
 /**
  * Default accessible name applied to the skip button when the consumer does not set an

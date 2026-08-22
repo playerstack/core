@@ -21,7 +21,7 @@ export type { LiveDVRState } from '@typings/live-dvr.types';
  *   - `live-dot` is the LIVE status dot.
  *   - `live-offset` is the text region that shows the negative offset when behind live.
  */
-export type LiveIndicatorPart = 'live-indicator' | 'live-dot' | 'live-offset';
+export type LiveIndicatorPart = 'live-indicator' | 'live-dot' | 'live-label' | 'live-offset';
 
 /** Public DVR state type the element's `dvrState` setter accepts; an alias of `LiveDVRState`. */
 export type LiveIndicatorDVRState = LiveDVRState;

@@ -111,11 +111,20 @@ export const UI_ELEMENT_BINDINGS: readonly UiElementBinding[] = [
     attributes: [],
     requestEvents: [],
   },
-  // Settings (speed + quality): `aria-label` accessible name; emits rate + custom quality.
+  // Settings (speed + quality + captions): `aria-label` accessible name; emits rate + custom
+  // quality, plus caption-language selection (`playerstack-caption-request`) and caption-STYLE
+  // changes (`playerstack-caption-style-request`) from the desktop captions category + "Options"
+  // style panel (parity with the original desktop settings + `CaptionOptions`). Rich props
+  // (`qualityOptions`/`captions`/`activeCaption`/`captionStyle`/`i18n`/`adMode`) go via property.
   {
     tagName: 'playerstack-settings',
     attributes: ['aria-label'],
-    requestEvents: ['playerstack-rate-request', 'playerstack-quality-request'],
+    requestEvents: [
+      'playerstack-rate-request',
+      'playerstack-quality-request',
+      'playerstack-caption-request',
+      'playerstack-caption-style-request',
+    ],
   },
   // Fullscreen toggle: `aria-label` accessible name; emits enter/exit fullscreen.
   {
@@ -195,22 +204,23 @@ export const UI_ELEMENT_BINDINGS: readonly UiElementBinding[] = [
     attributes: ['aria-label'],
     requestEvents: ['playerstack-play-request', 'playerstack-pause-request', 'playerstack-seek-request'],
   },
-  // Ad overlay: `aria-label` on the skip button; emits ad-skip + ad-click.
+  // Ad overlay: `aria-label` on the skip button; `language` localizes the banner "Sponsored"
+  // label; emits ad-skip + ad-click.
   {
     tagName: 'playerstack-ad-overlay',
-    attributes: ['aria-label'],
+    attributes: ['aria-label', 'language'],
     requestEvents: ['playerstack-ad-skip', 'playerstack-ad-click'],
   },
-  // LIVE indicator: no observed attributes; a click behind live emits a seek-to-edge.
+  // LIVE indicator: `language` localizes the "Live" label; a click behind live emits a seek-to-edge.
   {
     tagName: 'playerstack-live-indicator',
-    attributes: [],
+    attributes: ['language'],
     requestEvents: ['playerstack-seek-request'],
   },
-  // Double-tap skip overlay: no observed attributes; a double tap emits a seek intent.
+  // Double-tap skip overlay: `language` localizes the "seconds" label; a double tap emits a seek.
   {
     tagName: 'playerstack-double-tap',
-    attributes: [],
+    attributes: ['language'],
     requestEvents: ['playerstack-seek-request'],
   },
   // Icon renderer: `width`/`height` size the SVG; presentational, no requests.

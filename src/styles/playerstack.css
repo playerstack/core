@@ -598,12 +598,14 @@ playerstack-chapters {
   height: 36px;
 }
 
-/* Captions overlay tag still self-positions over the stage. */
+/* Captions overlay host = a full-stage positioning context (the draggable `[part='captions']`
+   box positions itself by inline `left`/`top` percentages against it). Click-through so it never
+   blocks the video; the box itself re-enables pointer events for dragging. */
 playerstack-captions {
   position: absolute;
-  left: 50%;
-  bottom: 72px;
+  inset: 0;
   z-index: 6;
+  pointer-events: none;
 }
 
 /* Fullscreen grows the control bar height 36px -> 54px (isFullscreen). */
@@ -783,6 +785,13 @@ playerstack-live-indicator[data-at-edge='true'] [part='live-dot'] {
 
 [part='live-offset'] {
   font-size: 13px;
+}
+
+/* "Live" text label (parity with the original badge text). Inherits the indicator color/size; a
+   small left gap separates it from the offset readout when both show. */
+[part='live-label'] {
+  font-size: 13px;
+  margin-right: 6px;
 }
 
 /* Chapter title read-out (StyledChapterIndicator): dim inline label. When a chapter is active
@@ -1567,6 +1576,138 @@ playerstack-settings [part='submenu'][data-show] [part='submenu-content'] {
 }
 
 /* -------------------------------------------------------------------------- */
+/* Captions submenu "Options" affordance + caption STYLE config panel.         */
+/* Parity with the original desktop `DropdownOverlay` "Options" link and the    */
+/* `CaptionOptions` panel (a second dropdown that customizes font/colors/edge). */
+/* -------------------------------------------------------------------------- */
+
+/* "Options" link in the Captions submenu header (StyledGeneralButton isText, underlined, pushed
+   to the right of the back button). Opens the caption STYLE panel. */
+[part='submenu-options'] {
+  margin-left: auto;
+  padding: 20px 15px;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: underline;
+  opacity: 0.8;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+[part='submenu-options']:hover,
+[part='submenu-options']:focus {
+  opacity: 1;
+}
+
+/* Caption STYLE panel container (CaptionOptions StyledOptionsContainer): same anchored 250px
+   translucent dropdown as the settings submenu; scrollable. Hidden until the host reflects
+   `data-caption-options` (set when the panel is open). It layers OVER the Captions submenu, so
+   while it is open hide the plain submenu behind it. */
+[part='caption-options'] {
+  width: 250px;
+  max-height: 283.5px;
+  position: absolute;
+  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 21;
+  right: -35px;
+  bottom: 55px;
+  background: rgba(15, 15, 15, 0.9);
+  color: #fff;
+  border-radius: var(--playerstack-radius-md, 8px);
+  display: none;
+}
+
+[part='caption-options']::-webkit-scrollbar {
+  width: 8px;
+  background-color: #4c4c4c;
+}
+
+[part='caption-options']::-webkit-scrollbar-thumb {
+  background-color: #909090;
+  border-radius: 10px;
+}
+
+playerstack-media-controller[data-fullscreen] [part='caption-options'] {
+  right: -52px;
+  bottom: 75px;
+}
+
+/* When the style panel is open, reveal it and hide the plain Captions submenu behind it. */
+playerstack-settings[data-open][data-caption-options] [part='caption-options'] {
+  display: block;
+}
+
+playerstack-settings[data-open][data-caption-options] [part='submenu'] {
+  display: none;
+}
+
+/* Style panel header (StyledOptionsHeader): mirrors the submenu header divider row. */
+[part='caption-options-header'] {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+/* Style property rows (StyledOptionsItem): label left, current value + chevron right. */
+[part='caption-options-item'] {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+  height: 40px;
+  padding: 0 15px;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 40px;
+  cursor: pointer;
+  justify-content: flex-start;
+  border-radius: 8px;
+}
+
+[part='caption-options-item']:hover,
+[part='caption-options-item']:focus {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+playerstack-media-controller[data-fullscreen] [part='caption-options-item'] {
+  height: 49px;
+}
+
+[part='caption-options-label'] {
+  margin-right: auto;
+}
+
+[part='caption-options-value'] {
+  display: inline-flex;
+  align-items: center;
+  font-size: 87%;
+  opacity: 0.85;
+}
+
+[part='caption-options-value'] .icon {
+  display: inline-flex;
+  align-items: center;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+}
+
+[part='caption-options-value'] .icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+/* -------------------------------------------------------------------------- */
 /* Control-button tooltip (StyledTooltipText). A single floating label managed */
 /* by TooltipManager on the controller host: shown on hover over a control     */
 /* button, positioned above it, clamped within the player box. The manager     */
@@ -1604,55 +1745,59 @@ playerstack-media-controller[data-fullscreen] [part='tooltip-label'] {
 /* -------------------------------------------------------------------------- */
 /* Captions overlay + options (CaptionOverlay / CaptionOptions).             */
 /* -------------------------------------------------------------------------- */
+/* The draggable caption box (parity with the original StyledCaptionContainer): centered on its
+   inline `left`% via translateX(-50%), sized to its content, draggable (pointer-events:auto,
+   grab cursor). Hidden until a cue is active. `top`/`left` are set inline by the element. */
 [part='captions'] {
   position: absolute;
-  pointer-events: none;
-  text-align: center;
   transform: translateX(-50%);
+  text-align: center;
   z-index: 6;
   display: none;
+  pointer-events: auto;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  /* The element positions vertically by a `bottom` px offset (constant margin across sizes) and
+     horizontally by `left` %, so animate those (parity: the original animated `top`). */
+  transition: bottom 0.3s ease, left 0.3s ease;
 }
 
-/* Only render the caption overlay when a cue is active. `data-active` is reflected on the
-   `playerstack-captions` host via `reflectState({ active })` — always PRESENT as the string
-   `"true"`/`"false"` — so gate on the VALUE (a bare `[data-active]` would show the overlay even
-   with no active cue). */
+[part='captions']:active {
+  cursor: grabbing;
+}
+
+/* Show the caption box only when a cue is active. `data-active` is reflected as the always-
+   present string `"true"`/`"false"`, so gate on the VALUE. */
 playerstack-captions[data-active='true'] [part='captions'] {
   display: block;
 }
 
-[part='cue'] {
+/* The "window" box (StyledCaptionWindow): sized to its content, capped at 80vw, rounded. Its
+   background color/opacity are set INLINE from the caption style (windowColor/windowOpacity). */
+[part='caption-window'] {
   display: inline-block;
+  width: max-content;
+  max-width: 80vw;
   padding: 4px 8px;
   border-radius: 4px;
+}
+
+/* Each cue is its own line (StyledCaptionText): the font/color/background/edge-shadow are set
+   INLINE from the caption style; keep only the structural rules here so the box never distorts. */
+[part='cue'] {
+  display: block;
+  padding: 2px 6px;
+  border-radius: 2px;
   line-height: 1.4;
   font-weight: 500;
   white-space: pre-wrap;
   word-wrap: break-word;
-  max-width: 80vw;
-  background-color: rgba(0, 0, 0, 0.75);
-  color: #fff;
 }
 
-/* Caption options panel (StyledOptionsContainer) — reuses the settings dropdown look. */
-[part='caption-options'] {
-  width: 280px;
-  max-height: 280px;
-  overflow-y: auto;
-  overflow-x: hidden;
-  position: absolute;
-  z-index: 9;
-  right: -35px;
-  bottom: 45px;
-  background: rgba(15, 15, 15, 0.95);
-  border-radius: 6px;
-  padding: 4px 0;
-}
-
-playerstack-media-controller[data-fullscreen] [part='caption-options'] {
-  right: -52px;
-  bottom: 60px;
-}
+/* (The caption STYLE "Options" panel CSS lives with the settings dropdown block above —
+   `[part='caption-options']` gated by `playerstack-settings[data-open][data-caption-options]`.
+   A stale duplicate that lived here was removed to avoid a conflicting cascade.) */
 
 /* -------------------------------------------------------------------------- */
 /* Nav buttons (playerstack-nav-buttons) — the previous/next cluster.         */
@@ -1759,6 +1904,14 @@ playerstack-play-state:not([data-ended='true']) .icon-replay {
   display: none;
 }
 playerstack-play-state[data-ended='true'] .icon-play {
+  display: none;
+}
+
+/* The mobile glyph variants (`icon-play-mobile`/`icon-pause-mobile`) are hidden by default —
+   they only surface under the mobile skin (see the mobile play-state block). This keeps the
+   DESKTOP center overlay unchanged (desktop `icon-play`/`icon-replay`). */
+[part='play-state-button'] .icon-play-mobile,
+[part='play-state-button'] .icon-pause-mobile {
   display: none;
 }
 
@@ -2072,6 +2225,474 @@ playerstack-media-controller[data-fullscreen] [part='ad-skip-button'] {
   font-size: 145%;
 }
 
+/* -------------------------------------------------------------------------- */
+/* Ad BANNER (bottom-left gadget) — port of the original AdsOverlay banner:     */
+/* StyledAdBannerWrapper / StyledAdBanner / StyledAdIcon / StyledAdInfo /        */
+/* StyledAdTitle / StyledAdUrl / StyledAdButton / StyledSponsoredLabel. Sits     */
+/* just above the control bar, follows the timeline on autohide, and is          */
+/* click-through except the banner card + CTA button.                            */
+/* -------------------------------------------------------------------------- */
+[part='ad-banner-wrapper'] {
+  position: absolute;
+  left: 12px;
+  bottom: 44px;
+  z-index: 10;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  transition: bottom 0.25s cubic-bezier(0.4, 0, 1, 1);
+}
+
+/* Follows the timeline down when controls hide (StyledAdBannerWrapper `hiding`). */
+playerstack-media-controller[data-hiding] [part='ad-banner-wrapper'] {
+  bottom: 8px;
+}
+
+/* Fullscreen lifts the banner to clear the taller control bar. */
+playerstack-media-controller[data-fullscreen] [part='ad-banner-wrapper'] {
+  left: 20px;
+  gap: 6px;
+  bottom: 64px;
+}
+
+[part='ad-banner'] {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.75);
+  border-radius: 4px;
+  padding: 6px 10px;
+  pointer-events: auto;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+[part='ad-banner']:hover {
+  background: rgba(0, 0, 0, 0.9);
+}
+
+[part='ad-icon'] {
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+[part='ad-info'] {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+}
+
+[part='ad-title'] {
+  font-size: 12px;
+  font-weight: 500;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.8);
+}
+
+[part='ad-url'] {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.7);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.8);
+}
+
+[part='ad-button'] {
+  background: transparent;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 2px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.2s, border-color 0.2s;
+  text-shadow: none;
+}
+
+[part='ad-button']:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #fff;
+}
+
+[part='ad-sponsored'] {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.6);
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Mobile: the banner uses the same layout; nudge it above the mobile bottom bar. */
+playerstack-media-controller[data-skin-mode='mobile'] [part='ad-banner-wrapper'] {
+  left: 12px;
+  bottom: 44px;
+}
+
+playerstack-media-controller[data-skin-mode='mobile'][data-hiding] [part='ad-banner-wrapper'] {
+  bottom: 8px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Poster overlay (video skin) — port of the original StyledOverlayPoster: the  */
+/* cover image shown before playback / after end, fading out during playback.   */
+/* Targeted by the `.playerstack-poster` CLASS (not `[part='poster']`, which the */
+/* AUDIO skin uses for its 56px artwork) to avoid a cross-skin collision. The    */
+/* framework skin toggles `data-visible` from `currentTime<=0 || ended`.         */
+/* -------------------------------------------------------------------------- */
+.playerstack-poster {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 3;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s cubic-bezier(0, 0, 0.2, 1);
+}
+
+.playerstack-poster[data-visible='true'] {
+  opacity: 1;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Desktop control-bar Captions (CC) + Cast buttons (parity with the original  */
+/* DesktopPlayerSkin CaptionsButton + cast button). Both are framework-rendered */
+/* `<button part="captions-button|cast-button">` in the right control cluster;  */
+/* they match the shared 36px control button, and the CC glyph brightens when   */
+/* captions are active (`data-active='true'`). Cast is slightly smaller (20px)  */
+/* like the original. */
+/* -------------------------------------------------------------------------- */
+[part='captions-button'],
+[part='cast-button'] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  opacity: 0.8;
+  border-radius: var(--playerstack-radius-md, 8px);
+  transition: opacity 0.15s ease;
+  flex: 0 0 auto;
+}
+
+[part='captions-button']:hover,
+[part='cast-button']:hover,
+[part='captions-button']:focus,
+[part='cast-button']:focus {
+  opacity: 1;
+}
+
+/* Active captions: keep the CC glyph fully bright (the active icon already differs). */
+[part='captions-button'][data-active='true'] {
+  opacity: 1;
+}
+
+/* CC glyph matches the other desktop control glyphs (parity with the original `CaptionsButton`
+   -> `buildIconProps(fullscreen)` = 36×36, 54×54 fullscreen — the SVG at the full button size,
+   same visual scale as the settings gear). Sized explicitly so it never falls back to the 1.5em
+   default nor an inherited smaller value. */
+[part='captions-button'] .icon,
+[part='captions-button'] [part='icon'],
+[part='captions-button'] svg {
+  width: 36px;
+  height: 36px;
+}
+
+playerstack-media-controller[data-fullscreen] [part='captions-button'] .icon,
+playerstack-media-controller[data-fullscreen] [part='captions-button'] [part='icon'],
+playerstack-media-controller[data-fullscreen] [part='captions-button'] svg {
+  width: 54px;
+  height: 54px;
+}
+
+/* Cast glyph is a touch smaller (parity: 20px, 28px fullscreen). */
+[part='cast-button'] .icon,
+[part='cast-button'] [part='icon'],
+[part='cast-button'] svg {
+  width: 20px;
+  height: 20px;
+}
+
+playerstack-media-controller[data-fullscreen] [part='captions-button'],
+playerstack-media-controller[data-fullscreen] [part='cast-button'] {
+  width: 54px;
+  height: 54px;
+}
+
+playerstack-media-controller[data-fullscreen] [part='cast-button'] .icon,
+playerstack-media-controller[data-fullscreen] [part='cast-button'] [part='icon'],
+playerstack-media-controller[data-fullscreen] [part='cast-button'] svg {
+  width: 28px;
+  height: 28px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Sprite preview (mobile seek thumbnail) — port of the original SpritePreview */
+/* StyledSpriteOverlay/Frame: a full-stage frame shown while scrubbing that     */
+/* renders one sprite sheet cell scaled to cover the player. Fades with          */
+/* `data-visible`; the framework component sets the frame background inline.     */
+/* -------------------------------------------------------------------------- */
+.playerstack-sprite-preview {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 5;
+  background-color: #000;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.playerstack-sprite-preview[data-visible='true'] {
+  opacity: 1;
+}
+
+[part='sprite-preview-frame'] {
+  width: 100%;
+  height: 100%;
+  background-repeat: no-repeat;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Live-stream AD overlay (Twitch-style) — port of the original LiveAdOverlay  */
+/* styled-components onto `[part]` selectors. The ad <video> fills the stage    */
+/* over the (muted, still-playing) live stream; an AD badge + title sit top,    */
+/* a "Live Stream" pill + CTA + Skip sit bottom, and a yellow progress bar      */
+/* rides the bottom edge. Fades in on mount, fades out while `[data-exiting]`.   */
+/* -------------------------------------------------------------------------- */
+@keyframes playerstack-live-ad-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes playerstack-live-ad-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+[part='live-ad'] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  animation: playerstack-live-ad-fade-in 0.3s ease-out forwards;
+}
+
+/* Exit animation (original `$exiting`): fade out + become click-through. */
+[part='live-ad'][data-exiting='true'] {
+  animation: playerstack-live-ad-fade-out 0.4s ease-in forwards;
+  pointer-events: none;
+}
+
+[part='live-ad-video'] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000;
+  z-index: 1;
+}
+
+[part='live-ad-top-bar'] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  z-index: 3;
+  pointer-events: none;
+}
+
+[part='live-ad-badge'] {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 6px;
+  background: #f5c518;
+  color: #000;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  line-height: 1;
+  user-select: none;
+}
+
+[part='live-ad-info'] {
+  color: #fff;
+  font-size: 13px;
+  font-weight: 400;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 50%;
+  user-select: none;
+}
+
+[part='live-ad-bottom-bar'] {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  z-index: 3;
+  pointer-events: none;
+}
+
+[part='live-ad-actions'] {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 12px 8px;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+[part='live-ad-stream-badge'] {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  background: rgba(30, 30, 30, 0.85);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 3px;
+  user-select: none;
+  pointer-events: none;
+  margin-right: auto;
+}
+
+[part='live-ad-stream-badge']::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e91916;
+  flex-shrink: 0;
+}
+
+[part='live-ad-cta'] {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  background: #fff;
+  color: #000;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+}
+
+[part='live-ad-cta']:hover {
+  opacity: 0.85;
+}
+
+/* Skip button: dim/non-interactive during the countdown (`data-can-skip='false'`), filled + */
+/* clickable once skippable (`data-can-skip='true'`) — original `$canSkip` branch. */
+[part='live-ad-skip'] {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 3px;
+  white-space: nowrap;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+[part='live-ad-skip'][data-can-skip='false'] {
+  background: rgba(0, 0, 0, 0.6);
+  color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  cursor: default;
+}
+
+[part='live-ad-skip'][data-can-skip='true'] {
+  background: rgba(255, 255, 255, 0.95);
+  color: #000;
+  border: none;
+  cursor: pointer;
+}
+
+[part='live-ad-skip'][data-can-skip='true']:hover {
+  background: #fff;
+}
+
+[part='live-ad-progress'] {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.15);
+  position: relative;
+  overflow: hidden;
+}
+
+[part='live-ad-progress-bar'] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #f5c518;
+  transform-origin: left;
+  transform: scaleX(0);
+  transition: transform 0.25s linear;
+}
+
 /* NOTE: there is intentionally NO separate `[part='ad-progress']` bar. The ORIGINAL used the
    normal TimeSlider (tinted yellow via `adMode`) AS the ad progress bar — a SINGLE timeline —
    so `playerstack-ad-overlay` no longer renders its own progress element. Ad progress is driven
@@ -2184,6 +2805,47 @@ playerstack-double-tap[data-direction='"backward"'] [part='skip-indicator'] {
   50% {
     opacity: 1;
   }
+}
+
+/* Skip-indicator chevrons + text (parity with the original SkipOverlay: three animated
+   `mobileSkipChevronIcon`s + a "{seconds} {label}" line). The three chevrons pulse with the
+   seek-fade keyframes, staggered so they animate in sequence; the whole icon row rotates 180°
+   for a BACKWARD skip (mirroring `StyledSkipIconContainer direction === 'backward'`). */
+[part='skip-indicator-icons'] {
+  display: inline-flex;
+  align-items: center;
+}
+
+playerstack-double-tap[data-direction='"backward"'] [part='skip-indicator-icons'] {
+  transform: rotate(180deg);
+}
+
+[part='skip-indicator-icons'] .icon-skip-chevron {
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  opacity: 0;
+  animation: playerstack-seek-fade 1s infinite;
+}
+
+[part='skip-indicator-icons'] .icon-skip-chevron:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+[part='skip-indicator-icons'] .icon-skip-chevron:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+[part='skip-indicator-icons'] .icon-skip-chevron svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+[part='skip-indicator-text'] {
+  font-size: 12px;
+  color: #ccc;
+  margin-top: 4px;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -2312,10 +2974,26 @@ playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-top-bar'] bu
   opacity: 1;
 }
 
+/* Top-bar glyph sizing (parity: original mobile settings/captions icons at 24×24). The glyphs are
+   rendered by `playerstack-icon` as a `[part='icon']` span wrapping the svg — NOT a `.icon` class
+   — so the rule must target `[part='icon']` (and the `playerstack-icon` host) too; targeting only
+   `.icon`/`svg` left the icon SPAN at its intrinsic ~21px and squished the svg. Pin the host, the
+   `[part='icon']` box and the svg all to 24×24 so the gear/captions render at the original size. */
+playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-top-bar'] playerstack-icon,
+playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-top-bar'] [part='icon'],
 playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-top-bar'] .icon,
 playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-top-bar'] svg {
   width: 24px;
   height: 24px;
+}
+
+/* The cast/transmit glyph is slightly smaller (22px) than the gear/captions (24px) — parity with
+   the original mobile top bar, which rendered `<Icon icon={castIcon} width={22} height={22}/>`. */
+playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-top-bar'] button[aria-label='Google Cast'] playerstack-icon,
+playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-top-bar'] button[aria-label='Google Cast'] [part='icon'],
+playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-top-bar'] button[aria-label='Google Cast'] svg {
+  width: 22px;
+  height: 22px;
 }
 
 /* Center controls (StyledMobileCenterControls): centered play/prev/next. */
@@ -2416,28 +3094,44 @@ playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-center-contr
   height: 100%;
 }
 
-/* Glyph selection on mobile (parity with StyledMobilePlayButton): show the PAUSE glyph while
-   playing, the PLAY glyph while paused, the REPLAY glyph when ended. The desktop rules hide the
-   pause glyph in the center overlay and only show play/replay; re-enable the mobile pause glyph
-   and gate all three by the reflected `data-playing`/`data-ended` state. */
+/* Glyph selection on mobile (parity with StyledMobilePlayButton, which used the BOLD/LARGE
+   `mobilePlayIcon`/`mobilePauseIcon` — not the thin desktop play/pause). On mobile:
+     - HIDE all desktop center glyphs (`icon-play`/`icon-pause`) — they are the thin 36-viewBox
+       bars that rendered too small in the 56px button;
+     - show the MOBILE play glyph while paused, the MOBILE pause glyph while playing;
+     - keep the shared REPLAY glyph when ended (there is no mobile replay icon).
+   All gated by the reflected `data-playing`/`data-ended` state. */
+
+/* Hide the (thin) desktop play/pause center glyphs on mobile. */
 playerstack-media-controller[data-skin-mode='mobile']
   [part='mobile-center-controls']
-  playerstack-play-state:not([data-ended='true'])[data-playing='true']
+  [part='play-state-button']
+  .icon-play,
+playerstack-media-controller[data-skin-mode='mobile']
+  [part='mobile-center-controls']
+  [part='play-state-button']
   .icon-pause {
-  display: inline-flex;
-}
-playerstack-media-controller[data-skin-mode='mobile']
-  [part='mobile-center-controls']
-  playerstack-play-state:not([data-ended='true'])[data-playing='true']
-  .icon-play {
   display: none;
 }
+
+/* Paused (not ended): show the MOBILE play glyph. */
 playerstack-media-controller[data-skin-mode='mobile']
   [part='mobile-center-controls']
   playerstack-play-state:not([data-ended='true'])[data-playing='false']
-  .icon-pause {
-  display: none;
+  .icon-play-mobile {
+  display: inline-flex;
 }
+
+/* Playing (not ended): show the MOBILE pause glyph. */
+playerstack-media-controller[data-skin-mode='mobile']
+  [part='mobile-center-controls']
+  playerstack-play-state:not([data-ended='true'])[data-playing='true']
+  .icon-pause-mobile {
+  display: inline-flex;
+}
+
+/* Ended: the shared replay glyph shows (handled by the base `[data-ended='true']` rules); the
+   mobile play/pause variants stay hidden (default). */
 
 /* Visibility follows the CONTROLS: hidden (and non-interactive) while the controller is hiding,
    shown otherwise — so the center button appears with the rest of the chrome and disappears with
@@ -2559,11 +3253,48 @@ playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-bottom-bar']
   padding: 0;
 }
 
-/* Mobile fullscreen button in the bottom bar. */
-playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-bottom-bar'] [part='fullscreen-button'] {
-  width: 32px;
-  height: 32px;
+/* Mobile LIVE badge in the bottom bar (parity with StyledMobileLiveBadge/Dot): a compact
+   inline pill with a status dot + "Live" text. `margin-right:auto` pushes the rest of the row
+   (progress + fullscreen) to the right, matching the original layout. `data-at-edge` reddens the
+   dot + brightens the text (the desktop rules above already do the color swap by value). */
+playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-bottom-bar'] [part='live-indicator'] {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 8px;
+  margin: 0 auto 0 0;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 36px;
   flex-shrink: 0;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-bottom-bar'] [part='live-dot'] {
+  width: 6px;
+  height: 6px;
+  margin-right: 5px;
+}
+
+/* In pure-live (no DVR) there is NO time-slider, so the badge is the only timeline affordance;
+   the `margin-right:auto` still pushes fullscreen to the far right. */
+
+/* Mobile fullscreen button in the bottom bar. Parity with the original StyledMobileFullscreenButton:
+   a 36px button with a 36×36 glyph (the migration had shrunk it to 32px). */
+playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-bottom-bar'] [part='fullscreen-button'] {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+}
+
+/* The fullscreen glyph fills the 36px button (original rendered the SVG at 36×36). The desktop
+   control-glyph rule sizes `.icon` to 100% of the button, so pinning the button to 36px yields a
+   36px glyph — matching the original mobile bottom-bar fullscreen icon. */
+playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-bottom-bar'] [part='fullscreen-button'] .icon,
+playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-bottom-bar'] [part='fullscreen-button'] svg {
+  width: 36px;
+  height: 36px;
 }
 
 /* Mobile progress bar: the time-slider sits inline in the bottom bar, filling the free space
@@ -2799,6 +3530,41 @@ playerstack-media-controller[data-skin-mode='mobile']
 playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-bottom-bar'] [part='tooltip'],
 playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-bottom-bar'] [part='timelens'] {
   display: none;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Mobile AD MODE timeline (parity with the original MobileProgressBar `adMode`).*/
+/* During an ad the mobile skin renders NO chapters (CorePlayerSkin passes      */
+/* `chapters={null}` while `isAdActive`), so the PLAIN track carries the ad      */
+/* progress. The original tinted the played fill YELLOW (`#fc0`), hid the        */
+/* handle, and made the bar non-interactive (`onChangeCurrentTime={() => {}}`).  */
+/* The desktop `[data-ad-active]` rules DO this, but the mobile track-fill/thumb  */
+/* overrides (higher specificity) repaint the fill red + keep the flat handle,    */
+/* so the ad styling must be restated at the mobile specificity here.            */
+/* -------------------------------------------------------------------------- */
+
+/* Played fill turns yellow. Must out-specify the mobile track-fill rule
+   `[data-skin-mode='mobile'] [part='mobile-bottom-bar'] playerstack-time-slider:not([data-has-chapters]) [part='track-fill']`
+   (which pins `#cb0e0b`), so mirror that selector shape (+ the `[data-ad-active]` host attr) to win. */
+playerstack-media-controller[data-skin-mode='mobile'][data-ad-active] [part='mobile-bottom-bar'] playerstack-time-slider [part='track-fill'],
+playerstack-media-controller[data-skin-mode='mobile'][data-ad-active] [part='mobile-bottom-bar'] playerstack-time-slider:not([data-has-chapters]) [part='track-fill'] {
+  background: #fc0;
+}
+
+/* Handle hidden during an ad (the ad bar is not seekable). */
+playerstack-media-controller[data-skin-mode='mobile'][data-ad-active] [part='mobile-bottom-bar'] [part='thumb'] {
+  display: none;
+}
+
+/* Non-interactive: default cursor, and the rail never thickens on hover/slide during an ad. */
+playerstack-media-controller[data-skin-mode='mobile'][data-ad-active] [part='mobile-bottom-bar'] [part='slider'] {
+  cursor: default;
+}
+
+playerstack-media-controller[data-skin-mode='mobile'][data-ad-active] [part='mobile-bottom-bar'] [part='track'],
+playerstack-media-controller[data-skin-mode='mobile'][data-ad-active] [part='mobile-bottom-bar'] [part='slider']:hover [part='track'] {
+  height: 2px;
+  transform: translateY(-50%);
 }
 
 /* Mobile settings panel (MobileSettingsPanel): full-surface sliding panel. The element reflects
