@@ -13,8 +13,29 @@
  *   - `menu` is the main panel listing the top-level entries (Speed / Quality).
  *   - `submenu` is the panel shown when a top-level entry is selected.
  *   - `menu-item` / `submenu-item` are the individual selectable rows.
+ *   - `menu-item-title` / `menu-item-value` / `menu-item-arrow` are the parts of a main row
+ *     (label on the left, current value + right-chevron on the right) matching the original
+ *     `StyledDropdownTitle` / `StyledDropdownValue` / `ArrowRightIcon` layout.
+ *   - `submenu-header` is the submenu's back-navigation header (`StyledDropdownHeader`);
+ *     `submenu-back` is the back button (arrow + category title) inside it.
+ *   - `submenu-content` wraps the option list so the slide-in reveal (`StyledDropdownContent`)
+ *     can animate independently of the header.
+ *   - `hd-badge` is the "HD" sub-label appended to a full-HD quality option
+ *     (`StyledDropdownItemValueSub`).
  */
-export type SettingsPart = 'settings-button' | 'menu' | 'submenu' | 'menu-item' | 'submenu-item';
+export type SettingsPart =
+  | 'settings-button'
+  | 'menu'
+  | 'submenu'
+  | 'menu-item'
+  | 'submenu-item'
+  | 'menu-item-title'
+  | 'menu-item-value'
+  | 'menu-item-arrow'
+  | 'submenu-header'
+  | 'submenu-back'
+  | 'submenu-content'
+  | 'hd-badge';
 
 /**
  * Default accessible name applied to the settings button when the consumer does not set

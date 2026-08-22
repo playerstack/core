@@ -30,7 +30,7 @@ describe('playerstack-prevented-tip', () => {
   describe('Markup_Contract (Req 5.1, 5.2, 5.3)', () => {
     it('renders part="prevented-tip" with a part="prevented-tip-message" region carrying the i18n tip', () => {
       const { el } = mount('en');
-      const root = el.shadowRoot as ShadowRoot;
+      const root = el;
 
       expect(root.querySelector('[part="prevented-tip"]')).not.toBeNull();
       const message = root.querySelector('[part="prevented-tip-message"]');
@@ -40,7 +40,7 @@ describe('playerstack-prevented-tip', () => {
 
     it('matches the rendered shadow markup snapshot', () => {
       const { el } = mount('en');
-      expect((el.shadowRoot as ShadowRoot).innerHTML).toMatchSnapshot();
+      expect((el).innerHTML).toMatchSnapshot();
     });
   });
 

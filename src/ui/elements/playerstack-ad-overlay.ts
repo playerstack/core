@@ -72,9 +72,6 @@ export class PlayerstackAdOverlay extends PlayerstackElement {
   /** The rendered skip button; kept so its label/state can be updated after render. */
   private skipButton: HTMLButtonElement | null = null;
 
-  /** The rendered progress indicator whose width mirrors the controller's ad progress. */
-  private progress: HTMLElement | null = null;
-
   /**
    * Configures the owned controller with an ad config (or `null` to deactivate). Public
    * property so consumers/adapters attach ads the same way as the rest of Core; delegates to
@@ -101,11 +98,18 @@ export class PlayerstackAdOverlay extends PlayerstackElement {
 
   /**
    * Builds the Markup_Contract: a `part="ad-overlay"` container (hidden until an ad is active)
-   * holding a `part="ad-skip-button"` skip affordance, a `part="ad-progress"` indicator and a
-   * clickable `part="ad-click"` region. Nodes are created and APPENDED (never via `innerHTML`)
-   * so the adopted Style_Layer — in the fallback path an injected `<style>` — is preserved. A
-   * guard keeps `render` idempotent across reconnects. Controller subscriptions are wired here
-   * and paired with disposers for deterministic cleanup.
+   * holding a `part="ad-skip-button"` skip affordance and a clickable `part="ad-click"` region.
+   *
+   * NO separate `part="ad-progress"` bar is rendered: the normal `playerstack-time-slider`
+   * doubles as the ad progress bar in ad mode (tinted yellow via its `adMode`), matching the
+   * ORIGINAL where the TimeSlider WAS the ad progress and there was NO second bar. The skin
+   * bridges the ad currentTime/duration into the shared store during an ad, so the slider fill
+   * tracks ad progress without this overlay painting its own timeline (avoids the DOUBLE bar).
+   *
+   * Nodes are created and APPENDED (never via `innerHTML`) so the adopted Style_Layer — in the
+   * fallback path an injected `<style>` — is preserved. A guard keeps `render` idempotent across
+   * reconnects. Controller subscriptions are wired here and paired with disposers for
+   * deterministic cleanup.
    */
   protected render(): void {
     if (this.overlay !== null) {
@@ -130,12 +134,6 @@ export class PlayerstackAdOverlay extends PlayerstackElement {
     clickRegion.addEventListener('click', onAdClick);
     this.addDisposer(() => clickRegion.removeEventListener('click', onAdClick));
 
-    // Progress indicator.
-    const progressPart: AdOverlayPart = 'ad-progress';
-    const progress = document.createElement('div');
-    progress.setAttribute('part', progressPart);
-    progress.style.width = '0%';
-
     // Skip affordance: a click routes to the controller (invoking the configured `onSkip`) and
     // also dispatches a request event for adapter extensibility.
     const skipPart: AdOverlayPart = 'ad-skip-button';
@@ -155,12 +153,10 @@ export class PlayerstackAdOverlay extends PlayerstackElement {
     this.addDisposer(() => skipButton.removeEventListener('click', onSkipClick));
 
     overlay.appendChild(clickRegion);
-    overlay.appendChild(progress);
     overlay.appendChild(skipButton);
 
     this.overlay = overlay;
     this.skipButton = skipButton;
-    this.progress = progress;
 
     this.wireController();
 
@@ -185,10 +181,8 @@ export class PlayerstackAdOverlay extends PlayerstackElement {
     this.addDisposer(() => this.controller.off('adActivated', onActivated));
 
     const onProgress = (data: { progress: number; canSkip: boolean; skipCountdown: number }): void => {
-      if (this.progress !== null) {
-        const clamped = data.progress < 0 ? 0 : data.progress > 1 ? 1 : data.progress;
-        this.progress.style.width = `${clamped * 100}%`;
-      }
+      // Ad PROGRESS is surfaced by the shared time-slider (tinted yellow in ad mode), NOT by a
+      // separate bar in this overlay, so only the skip countdown/enabled state is updated here.
       this.updateSkip(data.canSkip, data.skipCountdown);
     };
     this.controller.on('adProgress', onProgress);
@@ -229,7 +223,10 @@ export class PlayerstackAdOverlay extends PlayerstackElement {
       return;
     }
     this.skipButton.disabled = !canSkip;
-    this.skipButton.textContent = canSkip ? DEFAULT_LABEL : `${DEFAULT_LABEL} (${skipCountdown})`;
+    // Parity with the original AdsOverlay: BEFORE the ad is skippable the affordance shows ONLY
+    // the remaining seconds (the `StyledSkipMessage` countdown, no "Skip ad" text); ONCE
+    // skippable it shows the "Skip ad" label. It never reads "Skip ad (N)".
+    this.skipButton.textContent = canSkip ? DEFAULT_LABEL : String(skipCountdown);
     // camelCase key so the pure reflector maps `canSkip` -> `data-can-skip` (Req 3.3).
     this.reflectState({ canSkip });
   }

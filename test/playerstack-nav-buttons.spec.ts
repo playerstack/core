@@ -33,7 +33,7 @@ describe('playerstack-nav-buttons', () => {
   describe('Markup_Contract (Req 5.1, 5.2, 5.3)', () => {
     it('renders part="nav-buttons" with prev/next buttons and their icon glyphs', () => {
       const { el } = mount();
-      const root = el.shadowRoot as ShadowRoot;
+      const root = el;
 
       expect(root.querySelector('[part="nav-buttons"]')).not.toBeNull();
 
@@ -49,7 +49,7 @@ describe('playerstack-nav-buttons', () => {
 
     it('applies the default accessible names when no labels are provided', () => {
       const { el } = mount();
-      const root = el.shadowRoot as ShadowRoot;
+      const root = el;
 
       expect(root.querySelector('[part="prev-button"]')?.getAttribute('aria-label')).toBe('Previous');
       expect(root.querySelector('[part="next-button"]')?.getAttribute('aria-label')).toBe('Next');
@@ -63,14 +63,14 @@ describe('playerstack-nav-buttons', () => {
       el.setAttribute('next-label', 'Siguiente');
       host.appendChild(el);
 
-      const root = el.shadowRoot as ShadowRoot;
+      const root = el;
       expect(root.querySelector('[part="prev-button"]')?.getAttribute('aria-label')).toBe('Anterior');
       expect(root.querySelector('[part="next-button"]')?.getAttribute('aria-label')).toBe('Siguiente');
     });
 
     it('matches the rendered shadow markup snapshot', () => {
       const { el } = mount();
-      expect((el.shadowRoot as ShadowRoot).innerHTML).toMatchSnapshot();
+      expect((el).innerHTML).toMatchSnapshot();
     });
   });
 
@@ -81,7 +81,7 @@ describe('playerstack-nav-buttons', () => {
       const received: CustomEvent[] = [];
       document.addEventListener('playerstack-prev-request', (e) => received.push(e as CustomEvent));
 
-      const prev = (el.shadowRoot as ShadowRoot).querySelector('[part="prev-button"]') as HTMLButtonElement;
+      const prev = (el).querySelector('[part="prev-button"]') as HTMLButtonElement;
       prev.click();
 
       expect(received).toHaveLength(1);
@@ -95,7 +95,7 @@ describe('playerstack-nav-buttons', () => {
       const received: CustomEvent[] = [];
       document.addEventListener('playerstack-next-request', (e) => received.push(e as CustomEvent));
 
-      const next = (el.shadowRoot as ShadowRoot).querySelector('[part="next-button"]') as HTMLButtonElement;
+      const next = (el).querySelector('[part="next-button"]') as HTMLButtonElement;
       next.click();
 
       expect(received).toHaveLength(1);

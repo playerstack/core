@@ -27,7 +27,7 @@ describe('playerstack-play-state', () => {
   describe('Markup_Contract + ARIA (Req 1.5, 5.1, 5.2, 5.3)', () => {
     it('renders part="play-state" with a button and glyph spans', () => {
       const { el } = mount();
-      const root = el.shadowRoot as ShadowRoot;
+      const root = el;
 
       expect(root.querySelector('[part="play-state"]')).not.toBeNull();
       const button = root.querySelector('[part="play-state-button"]');
@@ -41,7 +41,7 @@ describe('playerstack-play-state', () => {
 
     it('matches the rendered shadow markup snapshot', () => {
       const { el } = mount();
-      expect((el.shadowRoot as ShadowRoot).innerHTML).toMatchSnapshot();
+      expect((el).innerHTML).toMatchSnapshot();
     });
   });
 
@@ -59,6 +59,55 @@ describe('playerstack-play-state', () => {
     });
   });
 
+  describe('center-overlay visibility gate (Req 3.3) — data-showing', () => {
+    it('does NOT show (no data-showing) while the video is playing, so it never blocks clicks', () => {
+      const { host, el } = mount();
+
+      host.store.set({ playing: true, isEnded: false, isLoading: false, isBuffering: false, kernelError: null });
+
+      // Regression for the reported bug: during playback the center overlay must be hidden and
+      // click-through (the CSS keys visibility + pointer-events off `[data-showing="true"]`).
+      expect(el.getAttribute('data-showing')).toBeNull();
+    });
+
+    it('shows (data-showing="true") when paused and idle', () => {
+      const { host, el } = mount();
+
+      host.store.set({ playing: false, isEnded: false, isLoading: false, isBuffering: false, kernelError: null });
+      expect(el.getAttribute('data-showing')).toBe('true');
+    });
+
+    it('shows when ended', () => {
+      const { host, el } = mount();
+
+      host.store.set({ playing: false, isEnded: true, isLoading: false, isBuffering: false, kernelError: null });
+      expect(el.getAttribute('data-showing')).toBe('true');
+    });
+
+    it('stays hidden while loading or buffering even when paused (spinner owns that state)', () => {
+      const { host, el } = mount();
+
+      host.store.set({ playing: false, isLoading: true, isBuffering: false, isEnded: false, kernelError: null });
+      expect(el.getAttribute('data-showing')).toBeNull();
+
+      host.store.set({ playing: false, isLoading: false, isBuffering: true, isEnded: false, kernelError: null });
+      expect(el.getAttribute('data-showing')).toBeNull();
+    });
+
+    it('stays hidden while a kernel status message is active', () => {
+      const { host, el } = mount();
+
+      host.store.set({
+        playing: false,
+        isLoading: false,
+        isBuffering: false,
+        isEnded: false,
+        kernelError: { message: 'stuck' } as never,
+      });
+      expect(el.getAttribute('data-showing')).toBeNull();
+    });
+  });
+
   describe('request-event wiring (Req 2.1)', () => {
     it('emits a play request when paused', () => {
       const { host, el } = mount();
@@ -67,7 +116,7 @@ describe('playerstack-play-state', () => {
       const received: CustomEvent[] = [];
       document.addEventListener('playerstack-play-request', (e) => received.push(e as CustomEvent));
 
-      (el.shadowRoot as ShadowRoot).querySelector<HTMLButtonElement>('[part="play-state-button"]')?.click();
+      (el).querySelector<HTMLButtonElement>('[part="play-state-button"]')?.click();
 
       expect(received).toHaveLength(1);
     });
@@ -79,7 +128,7 @@ describe('playerstack-play-state', () => {
       const received: CustomEvent[] = [];
       document.addEventListener('playerstack-pause-request', (e) => received.push(e as CustomEvent));
 
-      (el.shadowRoot as ShadowRoot).querySelector<HTMLButtonElement>('[part="play-state-button"]')?.click();
+      (el).querySelector<HTMLButtonElement>('[part="play-state-button"]')?.click();
 
       expect(received).toHaveLength(1);
     });

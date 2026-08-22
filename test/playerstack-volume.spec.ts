@@ -47,7 +47,7 @@ describe('playerstack-volume', () => {
   describe('Markup_Contract (Req 5.1, 5.2, 5.3)', () => {
     it('renders part="mute-button" and part="volume" with slider parts', () => {
       const { el } = mount();
-      const root = el.shadowRoot as ShadowRoot;
+      const root = el;
 
       const button = root.querySelector('[part="mute-button"]');
       expect(button).not.toBeNull();
@@ -63,7 +63,7 @@ describe('playerstack-volume', () => {
 
     it('matches the rendered shadow markup snapshot', () => {
       const { el } = mount();
-      expect((el.shadowRoot as ShadowRoot).innerHTML).toMatchSnapshot();
+      expect((el).innerHTML).toMatchSnapshot();
     });
   });
 
@@ -82,13 +82,49 @@ describe('playerstack-volume', () => {
 
     it('updates the track-fill width from the store volume', () => {
       const { host, el } = mount();
-      const fill = (el.shadowRoot as ShadowRoot).querySelector('[part="track-fill"]') as HTMLElement;
+      const fill = (el).querySelector('[part="track-fill"]') as HTMLElement;
 
       host.store.set({ volume: 0.25 });
       expect(fill.style.width).toBe('25%');
 
       host.store.set({ volume: 1 });
       expect(fill.style.width).toBe('100%');
+    });
+
+    // Regression (volume thumb positioning): the thumb `left` must track the store volume so
+    // it rides the end of the fill — previously the thumb was never positioned.
+    it('positions the thumb left at the store volume percentage', () => {
+      const { host, el } = mount();
+      const thumb = (el).querySelector('[part="thumb"]') as HTMLElement;
+
+      host.store.set({ volume: 0.25 });
+      expect(thumb.style.left).toBe('25%');
+
+      host.store.set({ volume: 1 });
+      expect(thumb.style.left).toBe('100%');
+    });
+
+    // Regression (mute empties the slider): muting must drop the EFFECTIVE volume to 0 so the
+    // fill width AND the thumb collapse to the left — the original `effectiveVolume = isMuted ?
+    // 0 : volume`. Previously muting only dimmed the fill but kept its width/thumb in place.
+    it('collapses the fill and thumb to 0 when muted (keeps stored volume)', () => {
+      const { host, el } = mount();
+      const fill = (el).querySelector('[part="track-fill"]') as HTMLElement;
+      const thumb = (el).querySelector('[part="thumb"]') as HTMLElement;
+
+      host.store.set({ volume: 0.7, isMuted: false });
+      expect(fill.style.width).toBe('70%');
+      expect(thumb.style.left).toBe('70%');
+
+      // Muting empties the slider even though the stored volume is unchanged.
+      host.store.set({ isMuted: true });
+      expect(fill.style.width).toBe('0%');
+      expect(thumb.style.left).toBe('0%');
+
+      // Unmuting restores the fill to the stored volume.
+      host.store.set({ isMuted: false });
+      expect(fill.style.width).toBe('70%');
+      expect(thumb.style.left).toBe('70%');
     });
   });
 
@@ -100,7 +136,7 @@ describe('playerstack-volume', () => {
       const received: CustomEvent[] = [];
       document.addEventListener('playerstack-mute-request', (e) => received.push(e as CustomEvent));
 
-      const button = (el.shadowRoot as ShadowRoot).querySelector('[part="mute-button"]') as HTMLButtonElement;
+      const button = (el).querySelector('[part="mute-button"]') as HTMLButtonElement;
       button.click();
 
       expect(received).toHaveLength(1);
@@ -114,15 +150,15 @@ describe('playerstack-volume', () => {
       const received: CustomEvent[] = [];
       document.addEventListener('playerstack-unmute-request', (e) => received.push(e as CustomEvent));
 
-      const button = (el.shadowRoot as ShadowRoot).querySelector('[part="mute-button"]') as HTMLButtonElement;
+      const button = (el).querySelector('[part="mute-button"]') as HTMLButtonElement;
       button.click();
 
       expect(received).toHaveLength(1);
     });
 
-    it('emits playerstack-volume-request with the computed volume on slider click', () => {
+    it('emits playerstack-volume-request with the computed volume on pointerdown (press)', () => {
       const { el } = mount();
-      const root = el.shadowRoot as ShadowRoot;
+      const root = el;
       const slider = root.querySelector('[part="slider"]') as HTMLElement;
       const track = root.querySelector('[part="track"]') as HTMLElement;
       jest.spyOn(track, 'getBoundingClientRect').mockReturnValue(RECT_100);
@@ -132,10 +168,114 @@ describe('playerstack-volume', () => {
         received.push(e as CustomEvent<{ volume: number }>),
       );
 
-      slider.dispatchEvent(new MouseEvent('click', { clientX: 50, bubbles: true }));
+      slider.dispatchEvent(new MouseEvent('pointerdown', { clientX: 50, bubbles: true }));
 
       expect(received).toHaveLength(1);
       expect(received[0]?.detail.volume).toBeCloseTo(0.5);
+      expect(received[0]?.composed).toBe(true);
+    });
+
+    // Regression (volume drag): press-and-drag must emit the live volume continuously on move
+    // and again on release — previously only a single click seeked and drag did nothing.
+    it('emits playerstack-volume-request continuously while dragging and on release', () => {
+      const { el } = mount();
+      const root = el;
+      const slider = root.querySelector('[part="slider"]') as HTMLElement;
+      const track = root.querySelector('[part="track"]') as HTMLElement;
+      jest.spyOn(track, 'getBoundingClientRect').mockReturnValue(RECT_100);
+
+      const volumes: number[] = [];
+      document.addEventListener('playerstack-volume-request', (e) =>
+        volumes.push((e as CustomEvent<{ volume: number }>).detail.volume),
+      );
+
+      slider.dispatchEvent(new MouseEvent('pointerdown', { clientX: 20, bubbles: true }));
+      slider.dispatchEvent(new MouseEvent('pointermove', { clientX: 60, bubbles: true }));
+      slider.dispatchEvent(new MouseEvent('pointermove', { clientX: 90, bubbles: true }));
+      slider.dispatchEvent(new MouseEvent('pointerup', { clientX: 100, bubbles: true }));
+
+      // press(0.2) + move(0.6) + move(0.9) + release(1.0)
+      expect(volumes).toHaveLength(4);
+      expect(volumes[0]).toBeCloseTo(0.2);
+      expect(volumes[1]).toBeCloseTo(0.6);
+      expect(volumes[2]).toBeCloseTo(0.9);
+      expect(volumes[3]).toBeCloseTo(1.0);
+    });
+
+    // Moving without a preceding press must NOT emit (no drag in progress).
+    it('does not emit on pointermove when not dragging', () => {
+      const { el } = mount();
+      const root = el;
+      const slider = root.querySelector('[part="slider"]') as HTMLElement;
+      const track = root.querySelector('[part="track"]') as HTMLElement;
+      jest.spyOn(track, 'getBoundingClientRect').mockReturnValue(RECT_100);
+
+      const received: Event[] = [];
+      document.addEventListener('playerstack-volume-request', (e) => received.push(e));
+
+      slider.dispatchEvent(new MouseEvent('pointermove', { clientX: 50, bubbles: true }));
+
+      expect(received).toHaveLength(0);
+    });
+  });
+
+  describe('percentage tooltip (StyledVolumePercentTooltip parity)', () => {
+    it('renders a hidden volume-tooltip by default', () => {
+      const { el } = mount();
+      const tip = (el).querySelector('[part="volume-tooltip"]') as HTMLElement;
+      expect(tip).not.toBeNull();
+      expect(tip.getAttribute('data-visible')).toBe('false');
+    });
+
+    it('shows the percentage on slider hover and hides on leave', () => {
+      const { host, el } = mount();
+      host.store.set({ volume: 0.5, isMuted: false });
+      const slider = (el).querySelector('[part="slider"]') as HTMLElement;
+      const tip = (el).querySelector('[part="volume-tooltip"]') as HTMLElement;
+
+      slider.dispatchEvent(new Event('pointerenter'));
+      expect(tip.getAttribute('data-visible')).toBe('true');
+      expect(tip.textContent).toBe('50%');
+      expect(tip.style.left).toBe('50%');
+
+      slider.dispatchEvent(new Event('pointerleave'));
+      expect(tip.getAttribute('data-visible')).toBe('false');
+    });
+
+    it('shows and follows the percentage while dragging, then stays only if hovered', () => {
+      const { el } = mount();
+      const root = el;
+      const slider = root.querySelector('[part="slider"]') as HTMLElement;
+      const track = root.querySelector('[part="track"]') as HTMLElement;
+      const tip = root.querySelector('[part="volume-tooltip"]') as HTMLElement;
+      jest.spyOn(track, 'getBoundingClientRect').mockReturnValue(RECT_100);
+
+      // Feed the emitted volume back into the store (mirrors the real bridge) so the tooltip
+      // reads the live value.
+      root.addEventListener('playerstack-volume-request', (e) => {
+        (root as unknown as { volume: number }).volume = (e as CustomEvent<{ volume: number }>).detail.volume;
+      });
+
+      slider.dispatchEvent(new MouseEvent('pointerdown', { clientX: 30, bubbles: true }));
+      expect(tip.getAttribute('data-visible')).toBe('true');
+
+      slider.dispatchEvent(new MouseEvent('pointermove', { clientX: 80, bubbles: true }));
+      // Dragging keeps it visible.
+      expect(tip.getAttribute('data-visible')).toBe('true');
+
+      // Release while NOT hovering hides it.
+      slider.dispatchEvent(new MouseEvent('pointerup', { clientX: 80, bubbles: true }));
+      expect(tip.getAttribute('data-visible')).toBe('false');
+    });
+
+    it('reads 0% while muted even with a stored volume', () => {
+      const { host, el } = mount();
+      host.store.set({ volume: 0.8, isMuted: true });
+      const slider = (el).querySelector('[part="slider"]') as HTMLElement;
+      const tip = (el).querySelector('[part="volume-tooltip"]') as HTMLElement;
+
+      slider.dispatchEvent(new Event('pointerenter'));
+      expect(tip.textContent).toBe('0%');
     });
   });
 });

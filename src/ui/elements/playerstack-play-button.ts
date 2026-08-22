@@ -15,6 +15,8 @@
 import type { PlayButtonDefaultLabel } from '@typings/ui/playerstack-play-button.types';
 import type { MediaStoreState } from '@typings/ui/media-store.types';
 import { PlayerstackElement } from '@ui/playerstack-element';
+import { renderSvgFromDescriptor } from '@ui/icon-render';
+import { playIcon, pauseIcon } from '@icons/index';
 
 /** Default accessible name used when no `aria-label` attribute is provided (Req 1.5). */
 const DEFAULT_LABEL: PlayButtonDefaultLabel = 'Play';
@@ -72,8 +74,14 @@ export class PlayerstackPlayButton extends PlayerstackElement {
     // inactive glyph based on the reflected `data-playing` state (Req 3.3).
     const iconPlay = document.createElement('span');
     iconPlay.className = 'icon icon-play';
+    // Inject the real SVG glyph into the span's OWN innerHTML (safe: the serializer escapes
+    // attribute values). The span node belongs to this element, not the shadow root, so the
+    // adopted Style_Layer / fallback `<style>` is untouched. The `icon-play` class is kept so
+    // the Style_Layer's state toggle keeps hiding/showing the glyph.
+    iconPlay.innerHTML = renderSvgFromDescriptor(playIcon);
     const iconPause = document.createElement('span');
     iconPause.className = 'icon icon-pause';
+    iconPause.innerHTML = renderSvgFromDescriptor(pauseIcon);
     button.appendChild(iconPlay);
     button.appendChild(iconPause);
 

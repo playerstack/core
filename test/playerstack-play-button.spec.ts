@@ -32,7 +32,7 @@ describe('playerstack-play-button', () => {
   describe('Markup_Contract (Req 5.1, 5.2, 5.3)', () => {
     it('renders part="play-button" with the play/pause glyph spans', () => {
       const { el } = mount();
-      const root = el.shadowRoot as ShadowRoot;
+      const root = el;
 
       const button = root.querySelector('[part="play-button"]');
       expect(button).not.toBeNull();
@@ -43,7 +43,7 @@ describe('playerstack-play-button', () => {
 
     it('matches the rendered shadow markup snapshot', () => {
       const { el } = mount();
-      expect((el.shadowRoot as ShadowRoot).innerHTML).toMatchSnapshot();
+      expect((el).innerHTML).toMatchSnapshot();
     });
   });
 
@@ -69,7 +69,7 @@ describe('playerstack-play-button', () => {
       const received: CustomEvent[] = [];
       document.addEventListener('playerstack-play-request', (e) => received.push(e as CustomEvent));
 
-      const button = (el.shadowRoot as ShadowRoot).querySelector('[part="play-button"]') as HTMLButtonElement;
+      const button = (el).querySelector('[part="play-button"]') as HTMLButtonElement;
       button.click();
 
       expect(received).toHaveLength(1);
@@ -84,7 +84,7 @@ describe('playerstack-play-button', () => {
       const received: CustomEvent[] = [];
       document.addEventListener('playerstack-pause-request', (e) => received.push(e as CustomEvent));
 
-      const button = (el.shadowRoot as ShadowRoot).querySelector('[part="play-button"]') as HTMLButtonElement;
+      const button = (el).querySelector('[part="play-button"]') as HTMLButtonElement;
       button.click();
 
       expect(received).toHaveLength(1);

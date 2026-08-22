@@ -22,10 +22,13 @@ export type AdOverlayAdsConfig = AdsConfig;
  *     `data-skippable`/`data-can-skip` state so the Style_Layer can show/hide and gate the
  *     skip affordance.
  *   - `ad-skip-button` is the skip affordance.
- *   - `ad-progress` is the progress indicator.
  *   - `ad-click` is the clickable click-through region.
+ *
+ * There is intentionally NO `ad-progress` part: the ad progress bar is the normal
+ * `playerstack-time-slider` tinted yellow in ad mode (parity with the original, which had a
+ * single timeline), so this overlay does not paint its own progress indicator.
  */
-export type AdOverlayPart = 'ad-overlay' | 'ad-skip-button' | 'ad-progress' | 'ad-click';
+export type AdOverlayPart = 'ad-overlay' | 'ad-skip-button' | 'ad-click';
 
 /**
  * Default accessible name applied to the skip button when the consumer does not set an

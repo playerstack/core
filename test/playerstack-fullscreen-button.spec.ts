@@ -30,7 +30,7 @@ describe('playerstack-fullscreen-button', () => {
   describe('Markup_Contract (Req 5.1, 5.2, 5.3)', () => {
     it('renders part="fullscreen-button" with the enter/exit glyph spans', () => {
       const { el } = mount();
-      const root = el.shadowRoot as ShadowRoot;
+      const root = el;
 
       const button = root.querySelector('[part="fullscreen-button"]');
       expect(button).not.toBeNull();
@@ -41,7 +41,7 @@ describe('playerstack-fullscreen-button', () => {
 
     it('matches the rendered shadow markup snapshot', () => {
       const { el } = mount();
-      expect((el.shadowRoot as ShadowRoot).innerHTML).toMatchSnapshot();
+      expect((el).innerHTML).toMatchSnapshot();
     });
   });
 
@@ -67,7 +67,7 @@ describe('playerstack-fullscreen-button', () => {
       const received: CustomEvent[] = [];
       document.addEventListener('playerstack-enter-fullscreen-request', (e) => received.push(e as CustomEvent));
 
-      const button = (el.shadowRoot as ShadowRoot).querySelector('[part="fullscreen-button"]') as HTMLButtonElement;
+      const button = (el).querySelector('[part="fullscreen-button"]') as HTMLButtonElement;
       button.click();
 
       expect(received).toHaveLength(1);
@@ -82,7 +82,7 @@ describe('playerstack-fullscreen-button', () => {
       const received: CustomEvent[] = [];
       document.addEventListener('playerstack-exit-fullscreen-request', (e) => received.push(e as CustomEvent));
 
-      const button = (el.shadowRoot as ShadowRoot).querySelector('[part="fullscreen-button"]') as HTMLButtonElement;
+      const button = (el).querySelector('[part="fullscreen-button"]') as HTMLButtonElement;
       button.click();
 
       expect(received).toHaveLength(1);

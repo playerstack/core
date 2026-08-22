@@ -30,10 +30,7 @@ class TestPlayerstackElement extends PlayerstackElement {
 
   protected override render(): void {
     this.renderCalls += 1;
-    // Append rather than replace innerHTML: the base class runs render() AFTER
-    // Style_Auto_Injection, and clobbering innerHTML would wipe the injected fallback
-    // <style data-playerstack-styles> element. Appending preserves it while still
-    // producing the element's markup.
+    // Light DOM: `this.root` is the element itself. Append the element's markup directly.
     const button = document.createElement('button');
     button.setAttribute('part', 'button');
     this.root.appendChild(button);
@@ -91,29 +88,27 @@ describe('PlayerstackElement', () => {
   });
 
   describe('connect lifecycle (Req 1.1, 3.7)', () => {
-    it('attaches an open shadow root and renders once on connect', () => {
+    it('uses light DOM (no shadow root) and renders once on connect', () => {
       const el = createElement();
-      // Shadow root is attached in the constructor (open mode).
-      expect(el.shadowRoot).not.toBeNull();
+      // No Shadow DOM: the element renders into its own light DOM.
+      expect(el.shadowRoot).toBeNull();
       expect(el.renderCalls).toBe(0);
 
       document.body.appendChild(el);
 
-      expect(el.shadowRoot).not.toBeNull();
+      expect(el.shadowRoot).toBeNull();
       expect(el.renderCalls).toBe(1);
-      expect(el.shadowRoot?.querySelector('button[part="button"]')).not.toBeNull();
+      // Markup is rendered into the element's own light DOM.
+      expect(el.querySelector('button[part="button"]')).not.toBeNull();
     });
 
-    it('applies the Style_Layer via Style_Auto_Injection on connect (Req 3.7)', () => {
+    it('injects the global Style_Layer into document.head on connect (Req 3.7)', () => {
       const el = createElement();
       document.body.appendChild(el);
 
-      const root = el.shadowRoot as ShadowRoot;
-      // Style_Auto_Injection uses adoptedStyleSheets when supported, otherwise a guarded
-      // <style data-playerstack-styles> fallback. Assert whichever branch applies.
-      const hasAdopted = Array.isArray(root.adoptedStyleSheets) && root.adoptedStyleSheets.length >= 1;
-      const hasStyleElement = root.querySelector('style[data-playerstack-styles]') !== null;
-      expect(hasAdopted || hasStyleElement).toBe(true);
+      // Style_Auto_Injection now injects a single global <style data-playerstack-styles>
+      // into document.head (no per-element shadow adoption).
+      expect(document.head.querySelector('style[data-playerstack-styles]')).not.toBeNull();
     });
   });
 

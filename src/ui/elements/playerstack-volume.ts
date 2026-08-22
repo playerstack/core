@@ -23,6 +23,8 @@ import type { VolumeDefaultLabel } from '@typings/ui/playerstack-volume.types';
 import type { MediaStoreState } from '@typings/ui/media-store.types';
 import { PlayerstackElement } from '@ui/playerstack-element';
 import { getVolumePercentage } from '@slider';
+import { renderSvgFromDescriptor } from '@ui/icon-render';
+import { unmutedIcon, mutedIcon } from '@icons/index';
 
 /** Default accessible name used when no `aria-label` attribute is provided (Req 1.5). */
 const DEFAULT_LABEL: VolumeDefaultLabel = 'Mute';
@@ -56,6 +58,18 @@ export class PlayerstackVolume extends PlayerstackElement {
   /** The rendered `track-fill` element whose width mirrors the current volume (Req 3.3). */
   private trackFill: HTMLElement | null = null;
 
+  /** The rendered thumb; its `left` mirrors the current volume percentage (Req 3.3). */
+  private thumb: HTMLElement | null = null;
+
+  /** The floating percentage read-out shown while hovering/dragging the slider. */
+  private tooltip: HTMLElement | null = null;
+
+  /** `true` while the user is dragging the volume slider (pointer pressed on the track). */
+  private dragging = false;
+
+  /** `true` while the pointer hovers the slider (drives the percentage tooltip, like original). */
+  private sliderHovering = false;
+
   /**
    * Reflects the latest `isMuted` state to `data-muted` on the host (Req 3.3), tracks the
    * mute/volume values for the handlers, and updates the slider fill width from `volume`.
@@ -67,21 +81,62 @@ export class PlayerstackVolume extends PlayerstackElement {
     this.volume = state.volume;
     this.reflectState({ muted: state.isMuted });
     this.updateFill();
+    // Keep the percentage read-out in sync when it is visible (e.g. muted toggled while hovering).
+    this.refreshTooltip();
   }
 
   /**
-   * Sets the `track-fill` width to the current volume as a percentage (Req 1.6, 3.3). A
-   * volume of `0..1` maps directly to `0..100%`; `getVolumePercentage` clamps to that range
-   * so out-of-bounds store values never produce an invalid width.
+   * Sets the `track-fill` width to the EFFECTIVE volume as a percentage (Req 1.6, 3.3). When
+   * muted the effective volume is 0 so the slider empties to the left — matching the original
+   * `effectiveVolume = isMuted ? 0 : volume` (the muted class only DIMMED the fill; the fill
+   * width still dropped to 0). `getVolumePercentage` clamps to `0..100` so out-of-bounds store
+   * values never produce an invalid width.
    */
   private updateFill(): void {
-    if (this.trackFill === null) {
-      return;
-    }
+    const effectiveVolume = this.muted ? 0 : this.volume;
     // Feed volume*100 as the "offset" against a width of 100 so the pure helper yields the
     // clamped percentage directly, keeping the fill math identical to the headless layer.
-    const percentage = getVolumePercentage(this.volume * 100, 100);
-    this.trackFill.style.width = `${percentage}%`;
+    const percentage = getVolumePercentage(effectiveVolume * 100, 100);
+    if (this.trackFill !== null) {
+      this.trackFill.style.width = `${percentage}%`;
+    }
+    // Position the thumb at the current volume so it rides the end of the fill (the original
+    // VolumeSlider positioned its thumb by the same volume percentage). Percent-based `left`
+    // keeps the geometry framework-agnostic without measuring the track width.
+    if (this.thumb !== null) {
+      // Position the thumb CENTER inside the track inset by its radius (7px) at both ends, so
+      // the 14px circle never overflows the `[part='volume']` box (which is `overflow:hidden`
+      // for the width 0->N reveal and would otherwise clip the ball at 0%/100%). The thumb's
+      // own `transform: translate(-50%,-50%)` centers the circle on this point. `--ps-thumb-r`
+      // (radius) is defined in the Style_Layer so fullscreen (9px) reuses the same math.
+      this.thumb.style.left = `${percentage}%`;
+    }
+  }
+
+  /**
+   * Shows/updates the percentage read-out (`StyledVolumePercentTooltip`) while the slider is
+   * hovered OR being dragged (original `showTooltip = sliderHovering || volumeSliding`). The
+   * text is the rounded EFFECTIVE volume (`Math.round(effectiveVolume * 100)%`, so muted reads
+   * `0%`), positioned above the thumb at the current percentage. Hidden otherwise. `forceMuted`
+   * (a disabled slider) is not modeled in Core, so the original `&& !forceMuted` guard maps to
+   * "always allowed here".
+   */
+  private refreshTooltip(): void {
+    if (this.tooltip === null) {
+      return;
+    }
+    const visible = this.sliderHovering || this.dragging;
+    if (!visible) {
+      this.tooltip.setAttribute('data-visible', 'false');
+      return;
+    }
+    const effectiveVolume = this.muted ? 0 : this.volume;
+    const percentage = getVolumePercentage(effectiveVolume * 100, 100);
+    this.tooltip.textContent = `${Math.round(percentage)}%`;
+    // Anchor the tooltip over the thumb: same percentage along the track. The CSS centers it
+    // with translateX(-50%) so `left:{pct}%` puts it above the current fill end.
+    this.tooltip.style.left = `${percentage}%`;
+    this.tooltip.setAttribute('data-visible', 'true');
   }
 
   /**
@@ -108,8 +163,14 @@ export class PlayerstackVolume extends PlayerstackElement {
     // glyph based on the reflected `data-muted` state (Req 3.3).
     const iconVolume = document.createElement('span');
     iconVolume.className = 'icon icon-volume';
+    // Inject the real SVG glyph into each span's OWN innerHTML (safe: the serializer escapes
+    // attribute values). The spans belong to this element, not the shadow root, so the adopted
+    // Style_Layer survives. The `icon-*` classes are kept so the mute-state toggle still swaps
+    // them. `unmutedIcon` is the "has volume" glyph; `mutedIcon` the muted one.
+    iconVolume.innerHTML = renderSvgFromDescriptor(unmutedIcon);
     const iconMuted = document.createElement('span');
     iconMuted.className = 'icon icon-muted';
+    iconMuted.innerHTML = renderSvgFromDescriptor(mutedIcon);
     muteButton.appendChild(iconVolume);
     muteButton.appendChild(iconMuted);
 
@@ -142,29 +203,105 @@ export class PlayerstackVolume extends PlayerstackElement {
     const thumb = document.createElement('div');
     thumb.setAttribute('part', 'thumb');
 
+    // Percentage read-out shown while hovering/dragging the slider (StyledVolumePercentTooltip).
+    const tooltip = document.createElement('div');
+    tooltip.setAttribute('part', 'volume-tooltip');
+    tooltip.setAttribute('data-visible', 'false');
+
     track.appendChild(trackFill);
     slider.appendChild(track);
     slider.appendChild(thumb);
+    slider.appendChild(tooltip);
     volume.appendChild(slider);
 
-    // A click on the slider computes a 0..1 volume from the pointer X relative to the track's
-    // bounding rect using the SAME pure geometry as the headless layer (Req 1.6), then emits a
-    // volume intent (Req 2.1). Kept simple: a single `click` handler; the MediaController owns
-    // the actual volume change.
-    const onSliderClick = (event: MouseEvent): void => {
+    // Computes a 0..1 volume from a pointer X relative to the track's bounding rect using the
+    // SAME pure geometry as the headless layer (Req 1.6) and emits a volume intent (Req 2.1).
+    // Returns `false` when the track has no width (jsdom / not laid out) so callers can bail.
+    const emitVolumeAt = (clientX: number): boolean => {
       const rect = track.getBoundingClientRect();
       if (rect.width <= 0) {
-        return;
+        return false;
       }
-      const offsetX = event.clientX - rect.left;
+      const offsetX = clientX - rect.left;
       const nextVolume = getVolumePercentage(offsetX, rect.width) / 100;
       this.dispatchRequest('playerstack-volume-request', { volume: nextVolume });
+      return true;
     };
-    slider.addEventListener('click', onSliderClick);
-    this.addDisposer(() => slider.removeEventListener('click', onSliderClick));
+
+    // Press-and-drag volume (ported from `useVolumeSlider`): the press emits the initial volume
+    // and starts a drag; subsequent moves emit the live volume continuously; the release emits
+    // the final volume and ends the drag. A plain click still emits once via the press. The
+    // pointer is captured (when supported) so the drag tracks past the track bounds — matching
+    // the original which attached document-level mousemove/mouseup while sliding.
+    const onPointerDown = (event: PointerEvent): void => {
+      if (!emitVolumeAt(event.clientX)) {
+        return;
+      }
+      this.dragging = true;
+      // Reveal the percentage read-out while dragging (original `volumeSliding`).
+      this.refreshTooltip();
+      if (typeof slider.setPointerCapture === 'function' && typeof event.pointerId === 'number') {
+        try {
+          slider.setPointerCapture(event.pointerId);
+        } catch {
+          // Ignore: capture is a best-effort enhancement (jsdom lacks it).
+        }
+      }
+    };
+    slider.addEventListener('pointerdown', onPointerDown);
+    this.addDisposer(() => slider.removeEventListener('pointerdown', onPointerDown));
+
+    const onPointerMove = (event: PointerEvent): void => {
+      if (!this.dragging) {
+        return;
+      }
+      emitVolumeAt(event.clientX);
+      // Keep the read-out following the drag.
+      this.refreshTooltip();
+    };
+    slider.addEventListener('pointermove', onPointerMove);
+    this.addDisposer(() => slider.removeEventListener('pointermove', onPointerMove));
+
+    const onPointerUp = (event: PointerEvent): void => {
+      if (!this.dragging) {
+        return;
+      }
+      this.dragging = false;
+      emitVolumeAt(event.clientX);
+      // Drag ended: keep the read-out only while still hovering (original hid it when the drag
+      // ended unless the pointer stayed over the slider).
+      this.refreshTooltip();
+    };
+    slider.addEventListener('pointerup', onPointerUp);
+    this.addDisposer(() => slider.removeEventListener('pointerup', onPointerUp));
+
+    // Hover reveals the percentage read-out too (original `sliderHovering`). Enter/leave are
+    // non-bubbling so they track the slider precisely; leaving while dragging keeps it visible
+    // (the drag flag still holds) until the drag ends.
+    const onEnter = (): void => {
+      this.sliderHovering = true;
+      this.refreshTooltip();
+    };
+    const onLeave = (): void => {
+      this.sliderHovering = false;
+      // Only hide when not mid-drag; a drag that leaves the slider keeps showing until release.
+      if (!this.dragging) {
+        this.refreshTooltip();
+      }
+    };
+    slider.addEventListener('pointerenter', onEnter);
+    slider.addEventListener('pointerleave', onLeave);
+    this.addDisposer(() => slider.removeEventListener('pointerenter', onEnter));
+    this.addDisposer(() => slider.removeEventListener('pointerleave', onLeave));
+    this.addDisposer(() => {
+      this.dragging = false;
+      this.sliderHovering = false;
+    });
 
     this.muteButton = muteButton;
     this.trackFill = trackFill;
+    this.thumb = thumb;
+    this.tooltip = tooltip;
 
     // Append (never clobber) so the adopted Style_Layer / fallback `<style>` survives.
     this.root.appendChild(muteButton);

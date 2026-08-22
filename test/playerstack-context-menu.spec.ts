@@ -22,7 +22,7 @@ function mount(): { host: PlayerstackMediaController; el: HTMLElement } {
 
 /** Returns the menu item button for a given action from the element's shadow root. */
 function itemFor(el: HTMLElement, action: string): HTMLButtonElement {
-  return (el.shadowRoot as ShadowRoot).querySelector(`[data-action="${action}"]`) as HTMLButtonElement;
+  return (el).querySelector(`[data-action="${action}"]`) as HTMLButtonElement;
 }
 
 describe('playerstack-context-menu', () => {
@@ -33,24 +33,48 @@ describe('playerstack-context-menu', () => {
   describe('Markup_Contract + ARIA roles (Req 1.5, 5.1, 5.2, 5.3)', () => {
     it('renders part="context-menu" role=menu with a menuitem per action', () => {
       const { el } = mount();
-      const root = el.shadowRoot as ShadowRoot;
+      const root = el;
 
       const menu = root.querySelector('[part="context-menu"]');
       expect(menu).not.toBeNull();
       expect(menu?.getAttribute('role')).toBe('menu');
 
+      // Parity: the original right-click menu offered only Loop + Picture in Picture.
       const items = root.querySelectorAll('[part="context-menu-item"]');
-      expect(items).toHaveLength(3);
+      expect(items).toHaveLength(2);
       items.forEach((item) => expect(item.getAttribute('role')).toBe('menuitem'));
 
       expect(itemFor(el, 'loop')).not.toBeNull();
       expect(itemFor(el, 'pip')).not.toBeNull();
-      expect(itemFor(el, 'fullscreen')).not.toBeNull();
+      // No Fullscreen row (removed for parity with the original menu).
+      expect(itemFor(el, 'fullscreen')).toBeNull();
     });
 
     it('matches the rendered shadow markup snapshot', () => {
       const { el } = mount();
-      expect((el.shadowRoot as ShadowRoot).innerHTML).toMatchSnapshot();
+      expect((el).innerHTML).toMatchSnapshot();
+    });
+  });
+
+  describe('markup details (icons + checked marker)', () => {
+    it('renders a leading icon + label on every item and a checked marker only on loop', () => {
+      const { el } = mount();
+      // Every item has an icon glyph and a label.
+      (['loop', 'pip'] as const).forEach((action) => {
+        const item = itemFor(el, action);
+        expect(item.querySelector('[part="context-menu-icon"] svg')).not.toBeNull();
+        expect(item.querySelector('[part="context-menu-label"]')).not.toBeNull();
+      });
+      // Only the loop item carries the checked marker (the checkable action).
+      expect(itemFor(el, 'loop').querySelector('[part="context-menu-checked"]')).not.toBeNull();
+      expect(itemFor(el, 'pip').querySelector('[part="context-menu-checked"]')).toBeNull();
+    });
+
+    it('renders icons before each label (loop + pip only)', () => {
+      const { el } = mount();
+      (['loop', 'pip'] as const).forEach((action) => {
+        expect(itemFor(el, action).querySelector('[part="context-menu-icon"] svg')).not.toBeNull();
+      });
     });
   });
 
@@ -63,6 +87,14 @@ describe('playerstack-context-menu', () => {
 
       document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
       expect(el.getAttribute('data-open')).toBeNull();
+    });
+
+    it('opens when the right-click happens anywhere on the player stage (delegation)', () => {
+      const { host, el } = mount();
+      // A right-click on the controller stage (not on the menu element itself) must open the
+      // menu, because the menu host is pointer-events:none and delegates to the stage.
+      host.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 30, clientY: 40 }));
+      expect(el.getAttribute('data-open')).toBe('true');
     });
 
     it('closes on a document click', () => {
@@ -108,21 +140,46 @@ describe('playerstack-context-menu', () => {
       expect(exit).toHaveLength(1);
     });
 
-    it('fullscreen item emits enter/exit based on store fullscreen state', () => {
-      const { host, el } = mount();
+  });
 
-      const enter: CustomEvent[] = [];
-      const exit: CustomEvent[] = [];
-      document.addEventListener('playerstack-enter-fullscreen-request', (e) => enter.push(e as CustomEvent));
-      document.addEventListener('playerstack-exit-fullscreen-request', (e) => exit.push(e as CustomEvent));
+  describe('ad / live / pip gating (parity with menuItemsMemorized)', () => {
+    it('drops the Loop row in ad mode (loop not toggleable during an ad)', () => {
+      const { el } = mount();
+      expect(itemFor(el, 'loop')).not.toBeNull();
 
-      host.store.set({ isFullScreen: false });
-      itemFor(el, 'fullscreen').click();
-      expect(enter).toHaveLength(1);
+      (el as unknown as { adMode: boolean }).adMode = true;
+      expect(itemFor(el, 'loop')).toBeNull();
+      // PiP stays.
+      expect(itemFor(el, 'pip')).not.toBeNull();
 
-      host.store.set({ isFullScreen: true });
-      itemFor(el, 'fullscreen').click();
-      expect(exit).toHaveLength(1);
+      // Ending the ad restores Loop.
+      (el as unknown as { adMode: boolean }).adMode = false;
+      expect(itemFor(el, 'loop')).not.toBeNull();
+    });
+
+    it('drops the Loop row for live streams', () => {
+      const { el } = mount();
+      (el as unknown as { live: boolean }).live = true;
+      expect(itemFor(el, 'loop')).toBeNull();
+      expect(itemFor(el, 'pip')).not.toBeNull();
+    });
+
+    it('drops the PiP row when PiP is unavailable', () => {
+      const { el } = mount();
+      (el as unknown as { pipEnabled: boolean }).pipEnabled = false;
+      expect(itemFor(el, 'pip')).toBeNull();
+      expect(itemFor(el, 'loop')).not.toBeNull();
+    });
+
+    it('exposes the gating flags via getters', () => {
+      const { el } = mount();
+      const typed = el as unknown as { adMode: boolean; live: boolean; pipEnabled: boolean };
+      typed.adMode = true;
+      typed.live = true;
+      typed.pipEnabled = false;
+      expect(typed.adMode).toBe(true);
+      expect(typed.live).toBe(true);
+      expect(typed.pipEnabled).toBe(false);
     });
   });
 
@@ -133,13 +190,14 @@ describe('playerstack-context-menu', () => {
       (el as unknown as { i18n: typeof i18n | null }).i18n = i18n;
 
       expect((el as unknown as { i18n: typeof i18n | null }).i18n).toBe(i18n);
-      expect(itemFor(el, 'loop').textContent).toBe('Repetir');
-      expect(itemFor(el, 'pip').textContent).toBe('Imagen en imagen');
-      expect(itemFor(el, 'fullscreen').textContent).toBe('Pantalla completa');
+      const labelOf = (action: string): string =>
+        itemFor(el, action).querySelector('[part="context-menu-label"]')?.textContent ?? '';
+      expect(labelOf('loop')).toBe('Repetir');
+      expect(labelOf('pip')).toBe('Imagen en imagen');
 
       // Resetting to null restores the English defaults.
       (el as unknown as { i18n: typeof i18n | null }).i18n = null;
-      expect(itemFor(el, 'loop').textContent).toBe('Loop');
+      expect(labelOf('loop')).toBe('Loop');
     });
   });
 
@@ -147,14 +205,13 @@ describe('playerstack-context-menu', () => {
     it('marks items active from the store state resolved at render', () => {
       const host = document.createElement('playerstack-media-controller') as PlayerstackMediaController;
       document.body.appendChild(host);
-      host.store.set({ loop: true, isPIP: true, isFullScreen: true });
+      host.store.set({ loop: true, isPIP: true });
 
       const el = document.createElement('playerstack-context-menu');
       host.appendChild(el); // connect: render paints active markers from the resolved store state
 
       expect(itemFor(el, 'loop').getAttribute('data-active')).toBe('true');
       expect(itemFor(el, 'pip').getAttribute('data-active')).toBe('true');
-      expect(itemFor(el, 'fullscreen').getAttribute('data-active')).toBe('true');
     });
   });
 });

@@ -17,10 +17,9 @@ export { tokenToCssVarName, cssVarNameToTokenId, compileTokensToCss } from '@sty
 export { reflectStateToAttributes, readStateFromAttributes } from '@styles/state-attributes';
 
 // Style_Auto_Injection API.
-export { getSharedStyleSheet, adoptPlayerstackStyles, ensureGlobalTokens } from '@styles/style-injector';
+export { ensurePlayerstackStyles, ensureGlobalTokens } from '@styles/style-injector';
 
 // Public types.
 export type { DesignToken, DesignTokenSet, TokenCategory } from '@typings/styles/tokens.types';
 export type { TokenId } from '@typings/styles/token-css.types';
 export type { AttributeReflection, ReflectableState } from '@typings/styles/state-attributes.types';
-export type { StyleInjectionTarget } from '@typings/styles/style-injector.types';

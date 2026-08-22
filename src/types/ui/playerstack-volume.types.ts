@@ -13,8 +13,10 @@
  *     / `[part='mute-button']:not([data-muted]) .icon-muted`.
  *   - `volume` dims the fill when muted via `[part='volume'][data-muted] [part='track-fill']`.
  *   - `slider` / `track` / `track-fill` / `thumb` reuse the shared slider primitives.
+ *   - `volume-tooltip` is the floating percentage read-out shown while hovering/dragging the
+ *     slider (`StyledVolumePercentTooltip`); it carries `data-visible` to fade in/out.
  */
-export type VolumePart = 'mute-button' | 'volume' | 'slider' | 'track' | 'track-fill' | 'thumb';
+export type VolumePart = 'mute-button' | 'volume' | 'slider' | 'track' | 'track-fill' | 'thumb' | 'volume-tooltip';
 
 /**
  * Default accessible name applied to the mute button when the consumer does not set an

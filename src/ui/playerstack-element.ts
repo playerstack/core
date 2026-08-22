@@ -5,17 +5,27 @@
  *
  * WHY a single base class
  *   Media Chrome and Vidstack both share a base element for the exact reasons captured
- *   here: uniform Shadow DOM setup, `observedAttributes` derived from a declarative
+ *   here: uniform lifecycle setup, `observedAttributes` derived from a declarative
  *   schema, prop<->attribute reflection through the pure helpers, media-context wiring,
  *   and deterministic teardown. Subclasses stay tiny and never re-implement lifecycle
  *   plumbing.
  *
+ * WHY no Shadow DOM (light DOM only)
+ *   Every `playerstack-*` element renders into its OWN light DOM (the element itself)
+ *   instead of an attached shadow root. The single-`<slot>` + `:host`/`::slotted` model
+ *   broke layout and some state selectors, because the composed `playerstack-*` children
+ *   were projected through a slot rather than being real descendants. Rendering into the
+ *   light DOM makes those children real DOM descendants so ordinary CSS selectors (host
+ *   tag + descendant `[part]`) work. The Style_Layer is injected ONCE globally into
+ *   `document.head` (see `ensurePlayerstackStyles`) rather than adopted per shadow root,
+ *   and Design_Tokens are declared on `:root` (not `:host`).
+ *
  * Responsibilities:
- *   - Attach an open Shadow DOM in the constructor so `part`s are stylable and
- *     `--playerstack-*` custom properties inherit across the boundary.
+ *   - Point `root` at the element itself (light DOM) so `render()` appends the element's
+ *     markup directly into the element.
  *   - Derive `observedAttributes` from the static `attributeSchema` (Req 1.1).
- *   - On connect: apply the Style_Layer via Style_Auto_Injection (Req 3.7), request the
- *     shared media context and subscribe to its store, then render.
+ *   - On connect: ensure the global Style_Layer is present in `document.head` exactly once
+ *     (Req 3.7), request the shared media context and subscribe to its store, then render.
  *   - On disconnect: run every registered disposer so listeners/subscriptions are cleaned
  *     up deterministically.
  *   - Convert changed attributes back to prop values respecting the declared `type`
@@ -29,7 +39,7 @@ import type { MediaStoreState, MediaStore } from '@typings/ui/media-store.types'
 import type { ReflectableState } from '@typings/styles/state-attributes.types';
 import { attributeToProp } from '@ui/attribute-reflect';
 import { requestMediaContext } from '@ui/media-context';
-import { adoptPlayerstackStyles } from '@styles/style-injector';
+import { ensurePlayerstackStyles } from '@styles/style-injector';
 import { reflectStateToAttributes } from '@styles/state-attributes';
 
 export abstract class PlayerstackElement extends HTMLElement implements MediaContextConsumer {
@@ -50,8 +60,12 @@ export abstract class PlayerstackElement extends HTMLElement implements MediaCon
     return Object.keys(schema).map((propKey) => schema[propKey]?.attribute ?? propKey);
   }
 
-  /** Open shadow root that hosts this element's rendered markup and adopted styles. */
-  protected root: ShadowRoot;
+  /**
+   * Light-DOM render container. There is NO shadow root: `root` is the element itself, so
+   * `render()` appends the element's markup directly into its own light DOM. Styles are
+   * injected globally into `document.head` (see `connectedCallback`), not per-element.
+   */
+  protected root: HTMLElement;
 
   /**
    * The shared reactive store, obtained from the media context on connect. `null` until
@@ -67,19 +81,21 @@ export abstract class PlayerstackElement extends HTMLElement implements MediaCon
 
   constructor() {
     super();
-    // Open mode keeps `part`s stylable from outside and lets `--playerstack-*` custom
-    // properties inherit through the shadow boundary for theming (Req 3.5).
-    this.root = this.attachShadow({ mode: 'open' });
+    // No Shadow DOM: render into the element's own light DOM so composed `playerstack-*`
+    // children are real descendants and ordinary CSS selectors work. Styles are injected
+    // globally into `document.head` (Req 3.5, 3.7).
+    this.root = this;
   }
 
   /**
-   * Applies the Style_Layer (Req 3.7), requests the shared media context and subscribes
-   * to its store, then renders. Runs each time the element is connected; `addDisposer`
-   * keeps the subscription paired with `disconnectedCallback` so reconnects are clean.
+   * Ensures the global Style_Layer is present in `document.head` exactly once (Req 3.7),
+   * requests the shared media context and subscribes to its store, then renders. Runs each
+   * time the element is connected; `addDisposer` keeps the subscription paired with
+   * `disconnectedCallback` so reconnects are clean.
    */
   connectedCallback(): void {
-    // Style_Auto_Injection: adopt the shared sheet into this shadow root (idempotent).
-    adoptPlayerstackStyles(this.root);
+    // Style_Auto_Injection: inject the shared Style_Layer into document.head (idempotent).
+    ensurePlayerstackStyles();
 
     // Ask the nearest provider for the shared context. If none responds synchronously the
     // callback simply never runs and the element retries on its next connect.
@@ -172,8 +188,8 @@ export abstract class PlayerstackElement extends HTMLElement implements MediaCon
 
   /**
    * Emits a request event expressing user intent without touching the media element
-   * directly (Req 2.1). `bubbles` + `composed` let the event climb out of the shadow root
-   * to the `MediaController` on the root host.
+   * directly (Req 2.1). `bubbles` + `composed` let the event climb up to the
+   * `MediaController` on the root host (`composed` is harmless in light DOM).
    */
   protected dispatchRequest<D>(type: string, detail?: D): void {
     this.dispatchEvent(new CustomEvent<D>(type, { detail, bubbles: true, composed: true }));
@@ -188,7 +204,8 @@ export abstract class PlayerstackElement extends HTMLElement implements MediaCon
   }
 
   /**
-   * Renders the element's shadow DOM markup. Implemented by each concrete UI_Element.
+   * Renders the element's light-DOM markup into `this.root` (the element itself).
+   * Implemented by each concrete UI_Element.
    */
   protected abstract render(): void;
 }

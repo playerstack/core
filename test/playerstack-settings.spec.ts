@@ -25,7 +25,7 @@ function mount(): { host: PlayerstackMediaController; el: HTMLElement } {
 
 /** Opens the menu (gear click) and returns the Speed top-level menu-item button. */
 function openSpeedMenu(el: HTMLElement): HTMLButtonElement {
-  const root = el.shadowRoot as ShadowRoot;
+  const root = el;
   const gear = root.querySelector('[part="settings-button"]') as HTMLButtonElement;
   gear.click();
   const items = Array.from(root.querySelectorAll('[part="menu-item"]')) as HTMLButtonElement[];
@@ -41,7 +41,7 @@ describe('playerstack-settings', () => {
   describe('Markup_Contract (Req 5.1, 5.2, 5.3)', () => {
     it('renders part="settings-button", part="menu" and part="submenu"', () => {
       const { el } = mount();
-      const root = el.shadowRoot as ShadowRoot;
+      const root = el;
 
       const button = root.querySelector('[part="settings-button"]');
       expect(button).not.toBeNull();
@@ -53,14 +53,14 @@ describe('playerstack-settings', () => {
 
     it('matches the rendered shadow markup snapshot', () => {
       const { el } = mount();
-      expect((el.shadowRoot as ShadowRoot).innerHTML).toMatchSnapshot();
+      expect((el).innerHTML).toMatchSnapshot();
     });
   });
 
   describe('open state + store→data-* propagation (Req 3.3)', () => {
     it('reflects data-open on the host when the menu toggles', () => {
       const { el } = mount();
-      const gear = (el.shadowRoot as ShadowRoot).querySelector('[part="settings-button"]') as HTMLButtonElement;
+      const gear = (el).querySelector('[part="settings-button"]') as HTMLButtonElement;
 
       gear.click();
       expect(el.getAttribute('data-open')).toBe('true');
@@ -76,7 +76,7 @@ describe('playerstack-settings', () => {
       const speed = openSpeedMenu(el);
       speed.click();
 
-      const root = el.shadowRoot as ShadowRoot;
+      const root = el;
       const active = root.querySelector('[part="submenu-item"][data-active="true"]') as HTMLElement;
       expect(active).not.toBeNull();
       expect(active.getAttribute('data-value')).toBe('2');
@@ -90,7 +90,7 @@ describe('playerstack-settings', () => {
       const speed = openSpeedMenu(el);
       speed.click();
 
-      const root = el.shadowRoot as ShadowRoot;
+      const root = el;
       const items = Array.from(root.querySelectorAll('[part="submenu-item"]')) as HTMLButtonElement[];
       const choice = items.find((item) => item.getAttribute('data-value') === '2') as HTMLButtonElement;
       expect(choice).not.toBeUndefined();
@@ -112,7 +112,7 @@ describe('playerstack-settings', () => {
         { label: '720p', value: '720' },
       ];
 
-      const root = el.shadowRoot as ShadowRoot;
+      const root = el;
       const gear = root.querySelector('[part="settings-button"]') as HTMLButtonElement;
       gear.click();
       const menuItems = Array.from(root.querySelectorAll('[part="menu-item"]')) as HTMLButtonElement[];
@@ -146,7 +146,7 @@ describe('playerstack-settings', () => {
       ];
       host.store.set({ playbackQuality: 720 });
 
-      const root = el.shadowRoot as ShadowRoot;
+      const root = el;
       const gear = root.querySelector('[part="settings-button"]') as HTMLButtonElement;
       gear.click();
       const quality = Array.from(root.querySelectorAll('[part="menu-item"]')).find(
@@ -157,6 +157,210 @@ describe('playerstack-settings', () => {
       const active = root.querySelector('[part="submenu-item"][data-active="true"]') as HTMLElement;
       expect(active).not.toBeNull();
       expect(active.getAttribute('data-value')).toBe('720');
+    });
+  });
+
+  describe('ad mode (Req parity: settings gating during ads)', () => {
+    // Regression: with no quality options, ad mode drops the Speed category too (buildSettingsOptions
+    // `if (!live && !adMode)`), leaving ZERO options — the host reflects `data-empty` so the Style_Layer
+    // hides the whole settings control (parity with the original `settingsOptions.length === 0 -> null`).
+    it('reflects data-empty when ad mode leaves no options (no qualities)', () => {
+      const { el } = mount();
+      expect(el.getAttribute('data-empty')).toBeNull();
+
+      (el as unknown as { adMode: boolean }).adMode = true;
+      expect(el.getAttribute('data-empty')).toBe('true');
+      expect((el as unknown as { adMode: boolean }).adMode).toBe(true);
+
+      // The main menu has no rows while empty.
+      const items = (el).querySelectorAll('[part="menu-item"]');
+      expect(items).toHaveLength(0);
+    });
+
+    // Regression: speed can NOT be changed during an ad — the Speed category must be absent even
+    // when quality options exist, so only Quality remains and no `data-category="speed"` row shows.
+    it('drops the Speed category in ad mode but keeps Quality (speed not changeable during ads)', () => {
+      const { el } = mount();
+      (el as unknown as { qualityOptions: Array<{ label: string; value: string }> }).qualityOptions = [
+        { label: '1080p', value: '1080' },
+      ];
+      (el as unknown as { adMode: boolean }).adMode = true;
+
+      // Not empty (Quality remains), so the control stays visible.
+      expect(el.getAttribute('data-empty')).toBeNull();
+
+      const gear = (el).querySelector('[part="settings-button"]') as HTMLButtonElement;
+      gear.click();
+      const categories = Array.from((el).querySelectorAll('[part="menu-item"]')).map((item) =>
+        (item as HTMLElement).getAttribute('data-category'),
+      );
+      expect(categories).toContain('quality');
+      expect(categories).not.toContain('speed');
+    });
+
+    // Turning ad mode off restores the Speed category and clears the empty flag.
+    it('restores the Speed category and clears data-empty when ad mode ends', () => {
+      const { el } = mount();
+      (el as unknown as { adMode: boolean }).adMode = true;
+      expect(el.getAttribute('data-empty')).toBe('true');
+
+      (el as unknown as { adMode: boolean }).adMode = false;
+      expect(el.getAttribute('data-empty')).toBeNull();
+
+      const gear = (el).querySelector('[part="settings-button"]') as HTMLButtonElement;
+      gear.click();
+      const categories = Array.from((el).querySelectorAll('[part="menu-item"]')).map((item) =>
+        (item as HTMLElement).getAttribute('data-category'),
+      );
+      expect(categories).toContain('speed');
+    });
+  });
+
+  describe('main row layout — title + current value + chevron', () => {
+    it('renders a title, current value, and chevron arrow in each main menu row', () => {
+      const { el } = mount();
+      const root = el;
+      const gear = root.querySelector('[part="settings-button"]') as HTMLButtonElement;
+      gear.click();
+
+      const speedItem = root.querySelector('[part="menu-item"][data-category="speed"]') as HTMLElement;
+      const title = speedItem.querySelector('[part="menu-item-title"]') as HTMLElement;
+      const value = speedItem.querySelector('[part="menu-item-value"]') as HTMLElement;
+      const arrow = speedItem.querySelector('[part="menu-item-arrow"]') as HTMLElement;
+
+      expect(title).not.toBeNull();
+      expect(title.textContent).toBe('Speed');
+      expect(value).not.toBeNull();
+      expect(value.textContent).toBe('Normal'); // playbackRate default 1 -> "Normal"
+      expect(arrow).not.toBeNull();
+      expect(arrow.querySelector('svg')).not.toBeNull();
+    });
+
+    it('shows the store-driven quality label in the quality main row', () => {
+      const { host, el } = mount();
+      (el as unknown as { qualityOptions: Array<{ label: string; value: string }> }).qualityOptions = [
+        { label: '1080p', value: '1080' },
+        { label: '720p', value: '720' },
+      ];
+      host.store.set({ playbackQuality: 720 });
+
+      const gear = (el).querySelector('[part="settings-button"]') as HTMLButtonElement;
+      gear.click();
+      const qualityItem = (el).querySelector('[part="menu-item"][data-category="quality"]') as HTMLElement;
+      const value = qualityItem.querySelector('[part="menu-item-value"]') as HTMLElement;
+      expect(value.textContent).toBe('720p');
+    });
+  });
+
+  describe('submenu navigation — header with back button', () => {
+    it('renders a submenu header with back arrow and category title', () => {
+      const { el } = mount();
+      const speed = openSpeedMenu(el);
+      speed.click();
+
+      const header = (el).querySelector('[part="submenu-header"]') as HTMLElement;
+      expect(header).not.toBeNull();
+
+      const back = header.querySelector('[part="submenu-back"]') as HTMLElement;
+      expect(back).not.toBeNull();
+      expect(back.querySelector('svg')).not.toBeNull();
+      // Title text inside the back button.
+      expect(back.textContent).toContain('Speed');
+    });
+
+    it('reflects data-submenu on the host when a category is open', () => {
+      const { el } = mount();
+      expect(el.getAttribute('data-submenu')).toBeNull();
+
+      const speed = openSpeedMenu(el);
+      speed.click();
+      expect(el.getAttribute('data-submenu')).toBe('speed');
+    });
+
+    it('clicking back returns to the main menu (clears data-submenu)', () => {
+      const { el } = mount();
+      const speed = openSpeedMenu(el);
+      speed.click();
+      expect(el.getAttribute('data-submenu')).toBe('speed');
+
+      const back = (el).querySelector('[part="submenu-back"]') as HTMLButtonElement;
+      back.click();
+      expect(el.getAttribute('data-submenu')).toBeNull();
+      expect(el.getAttribute('data-open')).toBe('true'); // still open
+    });
+  });
+
+  describe('submenu slide-in reveal (data-show)', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('sets data-show on the submenu after 100ms', () => {
+      const { el } = mount();
+      const speed = openSpeedMenu(el);
+      speed.click();
+
+      const submenu = (el).querySelector('[part="submenu"]') as HTMLElement;
+      // Before the timer fires, no data-show.
+      expect(submenu.getAttribute('data-show')).toBeNull();
+
+      jest.advanceTimersByTime(100);
+      expect(submenu.getAttribute('data-show')).toBe('true');
+    });
+  });
+
+  describe('HD badge on gear button (data-fullhd)', () => {
+    it('reflects data-fullhd when the active quality is full-HD', () => {
+      const { host, el } = mount();
+      (el as unknown as { qualityOptions: Array<{ label: string; value: string; isFullHD?: boolean }> }).qualityOptions =
+        [
+          { label: '1080p', value: '1080', isFullHD: true },
+          { label: '720p', value: '720' },
+        ];
+      host.store.set({ playbackQuality: 1080 });
+      expect(el.getAttribute('data-fullhd')).toBe('true');
+    });
+
+    it('does NOT reflect data-fullhd for non-HD qualities', () => {
+      const { host, el } = mount();
+      (el as unknown as { qualityOptions: Array<{ label: string; value: string; isFullHD?: boolean }> }).qualityOptions =
+        [
+          { label: '1080p', value: '1080', isFullHD: true },
+          { label: '720p', value: '720' },
+        ];
+      host.store.set({ playbackQuality: 720 });
+      expect(el.getAttribute('data-fullhd')).toBeNull();
+    });
+  });
+
+  describe('HD sub-badge on submenu options', () => {
+    it('renders an hd-badge part for full-HD quality options in the submenu', () => {
+      const { el } = mount();
+      (el as unknown as { qualityOptions: Array<{ label: string; value: string; isFullHD?: boolean }> }).qualityOptions =
+        [
+          { label: '1080p', value: '1080', isFullHD: true },
+          { label: '720p', value: '720' },
+        ];
+
+      const gear = (el).querySelector('[part="settings-button"]') as HTMLButtonElement;
+      gear.click();
+      const quality = Array.from((el).querySelectorAll('[part="menu-item"]')).find(
+        (item) => (item as HTMLElement).getAttribute('data-category') === 'quality',
+      ) as HTMLButtonElement;
+      quality.click();
+
+      const items = Array.from((el).querySelectorAll('[part="submenu-item"]'));
+      const hdItem = items.find((item) => (item as HTMLElement).getAttribute('data-value') === '1080') as HTMLElement;
+      const badge = hdItem?.querySelector('[part="hd-badge"]');
+      expect(badge).not.toBeNull();
+      expect(badge?.textContent).toBe('HD');
+
+      // 720p should NOT have the badge.
+      const nonHDItem = items.find((item) => (item as HTMLElement).getAttribute('data-value') === '720') as HTMLElement;
+      expect(nonHDItem?.querySelector('[part="hd-badge"]')).toBeNull();
     });
   });
 
@@ -178,13 +382,16 @@ describe('playerstack-settings', () => {
       (el as unknown as { i18n: typeof i18n | null }).i18n = i18n;
       expect((el as unknown as { i18n: typeof i18n | null }).i18n).toBe(i18n);
 
-      const root = el.shadowRoot as ShadowRoot;
+      const root = el;
       const gear = root.querySelector('[part="settings-button"]') as HTMLButtonElement;
       gear.click();
       const speedItem = Array.from(root.querySelectorAll('[part="menu-item"]')).find(
         (item) => (item as HTMLElement).getAttribute('data-category') === 'speed',
       ) as HTMLElement;
-      expect(speedItem.textContent).toBe('Velocidad');
+      // The main row now holds a title span + a current-value span + a chevron; assert on the
+      // dedicated title part rather than the row's aggregate textContent.
+      const speedTitle = speedItem.querySelector('[part="menu-item-title"]') as HTMLElement;
+      expect(speedTitle.textContent).toBe('Velocidad');
 
       // Resetting to null restores the English default label.
       (el as unknown as { i18n: typeof i18n | null }).i18n = null;

@@ -26,6 +26,8 @@
  */
 import type { NavPrevDefaultLabel, NavNextDefaultLabel } from '@typings/ui/playerstack-nav-buttons.types';
 import { PlayerstackElement } from '@ui/playerstack-element';
+import { renderSvgFromDescriptor } from '@ui/icon-render';
+import { previousTrackIcon, nextTrackIcon } from '@icons/index';
 
 /** Default accessible name used when no `prev-label` attribute is provided (Req 1.5). */
 const DEFAULT_PREV_LABEL: NavPrevDefaultLabel = 'Previous';
@@ -71,6 +73,10 @@ export class PlayerstackNavButtons extends PlayerstackElement {
     prevButton.setAttribute('aria-label', this.getAttribute('prev-label') ?? DEFAULT_PREV_LABEL);
     const iconPrev = document.createElement('span');
     iconPrev.className = 'icon icon-prev';
+    // Inject the real SVG glyph into the span's OWN innerHTML (safe: the serializer escapes
+    // attribute values). The span belongs to this element, not the shadow root, so the adopted
+    // Style_Layer survives. The `icon-prev` class name is kept for Style_Layer targeting.
+    iconPrev.innerHTML = renderSvgFromDescriptor(previousTrackIcon);
     prevButton.appendChild(iconPrev);
 
     const nextButton = document.createElement('button');
@@ -79,6 +85,7 @@ export class PlayerstackNavButtons extends PlayerstackElement {
     nextButton.setAttribute('aria-label', this.getAttribute('next-label') ?? DEFAULT_NEXT_LABEL);
     const iconNext = document.createElement('span');
     iconNext.className = 'icon icon-next';
+    iconNext.innerHTML = renderSvgFromDescriptor(nextTrackIcon);
     nextButton.appendChild(iconNext);
 
     // Emit prev/next intent via request events; each button maps to its own request (Req 2.1).

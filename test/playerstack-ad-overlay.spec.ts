@@ -29,20 +29,27 @@ describe('playerstack-ad-overlay', () => {
   describe('Markup_Contract + ARIA (Req 1.5, 5.1, 5.2, 5.3)', () => {
     it('renders part="ad-overlay" with skip button, progress and click regions', () => {
       const { el } = mount();
-      const root = el.shadowRoot as ShadowRoot;
+      const root = el;
 
       expect(root.querySelector('[part="ad-overlay"]')).not.toBeNull();
       const skip = root.querySelector('[part="ad-skip-button"]');
       expect(skip).not.toBeNull();
       expect(skip?.getAttribute('type')).toBe('button');
       expect(skip?.getAttribute('aria-label')).toBe('Skip ad');
-      expect(root.querySelector('[part="ad-progress"]')).not.toBeNull();
       expect(root.querySelector('[part="ad-click"]')).not.toBeNull();
+    });
+
+    // Regression (double timeline): the overlay must NOT render its own `[part='ad-progress']`
+    // bar — the normal time-slider (yellow in ad mode) is the SINGLE ad progress bar, matching
+    // the original. A second bar here caused the DOUBLE-timeline bug.
+    it('does NOT render a separate ad-progress bar (single timeline via the time-slider)', () => {
+      const { el } = mount();
+      expect((el).querySelector('[part="ad-progress"]')).toBeNull();
     });
 
     it('matches the rendered shadow markup snapshot', () => {
       const { el } = mount();
-      expect((el.shadowRoot as ShadowRoot).innerHTML).toMatchSnapshot();
+      expect((el).innerHTML).toMatchSnapshot();
     });
   });
 
@@ -61,12 +68,10 @@ describe('playerstack-ad-overlay', () => {
       expect(el.getAttribute('data-active')).toBe('true');
       expect(el.getAttribute('data-can-skip')).toBe('true');
 
-      const overlay = (el.shadowRoot as ShadowRoot).querySelector('[part="ad-overlay"]') as HTMLElement;
+      const overlay = (el).querySelector('[part="ad-overlay"]') as HTMLElement;
       expect(overlay.style.display).not.toBe('none');
-      const progress = (el.shadowRoot as ShadowRoot).querySelector('[part="ad-progress"]') as HTMLElement;
-      expect(progress.style.width).toBe('100%');
 
-      const skipButton = (el.shadowRoot as ShadowRoot).querySelector('[part="ad-skip-button"]') as HTMLButtonElement;
+      const skipButton = (el).querySelector('[part="ad-skip-button"]') as HTMLButtonElement;
       expect(skipButton.disabled).toBe(false);
 
       const received: CustomEvent[] = [];
@@ -90,11 +95,32 @@ describe('playerstack-ad-overlay', () => {
       const received: CustomEvent[] = [];
       document.addEventListener('playerstack-ad-click', (e) => received.push(e as CustomEvent));
 
-      const clickRegion = (el.shadowRoot as ShadowRoot).querySelector('[part="ad-click"]') as HTMLElement;
+      const clickRegion = (el).querySelector('[part="ad-click"]') as HTMLElement;
       clickRegion.click();
 
       expect(onAdClick).toHaveBeenCalledTimes(1);
       expect(received).toHaveLength(1);
+    });
+
+    // Regression (skip label): before the ad is skippable the affordance shows ONLY the
+    // remaining seconds (a number), NOT "Skip ad (N)"; once skippable it shows "Skip ad".
+    it('shows only the countdown number before skippable, then the "Skip ad" label', () => {
+      const { host, el } = mount();
+      const config: AdsConfig = { skipAfter: 5, onSkip: jest.fn(), onAdClick: jest.fn() };
+      (el as unknown as { ads: AdsConfig }).ads = config;
+
+      host.store.set({ playing: true });
+      // Not yet skippable: 2s of a 10s ad, skipAfter 5 → countdown shows a bare number.
+      host.store.set({ seek: 2, duration: 10 });
+      const skipButton = (el).querySelector('[part="ad-skip-button"]') as HTMLButtonElement;
+      expect(skipButton.disabled).toBe(true);
+      expect(skipButton.textContent).toMatch(/^\d+$/);
+      expect(skipButton.textContent).not.toContain('Skip ad');
+
+      // Past skipAfter → skippable: label is exactly "Skip ad" (no number).
+      host.store.set({ seek: 6, duration: 10 });
+      expect(skipButton.disabled).toBe(false);
+      expect(skipButton.textContent).toBe('Skip ad');
     });
 
     it('hides the overlay and clears state when the ad completes', () => {
@@ -108,7 +134,7 @@ describe('playerstack-ad-overlay', () => {
       // Reaching the end completes the ad (isEnded) → adCompleted hides the overlay.
       host.store.set({ seek: 10, duration: 10, isEnded: true });
 
-      const overlay = (el.shadowRoot as ShadowRoot).querySelector('[part="ad-overlay"]') as HTMLElement;
+      const overlay = (el).querySelector('[part="ad-overlay"]') as HTMLElement;
       expect(overlay.style.display).toBe('none');
       expect(el.getAttribute('data-active')).toBeNull();
     });
@@ -123,7 +149,7 @@ describe('playerstack-ad-overlay', () => {
       document.body.appendChild(host2);
       host2.appendChild(el);
 
-      const overlays = (el.shadowRoot as ShadowRoot).querySelectorAll('[part="ad-overlay"]');
+      const overlays = (el).querySelectorAll('[part="ad-overlay"]');
       expect(overlays).toHaveLength(1);
     });
   });

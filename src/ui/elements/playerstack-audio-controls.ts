@@ -34,6 +34,8 @@ import { PlayerstackElement } from '@ui/playerstack-element';
 import { audioPlayerStateInitial } from '@player-state';
 import { getTimeFromSliderPosition } from '@slider';
 import { formatTime } from '@utils/format';
+import { renderSvgFromDescriptor } from '@ui/icon-render';
+import { audioPlayIcon, audioPauseIcon } from '@icons/index';
 
 /** Default accessible name used when no `aria-label` attribute is provided (Req 1.5). */
 const DEFAULT_LABEL: AudioControlsDefaultLabel = 'Play';
@@ -138,8 +140,14 @@ export class PlayerstackAudioControls extends PlayerstackElement {
     // glyph based on the reflected `data-playing` state (Req 3.3).
     const iconPlay = document.createElement('span');
     iconPlay.className = 'icon icon-play';
+    // Inject the real audio-specific SVG glyph into each span's OWN innerHTML (safe: the
+    // serializer escapes attribute values). The spans belong to this element, not the shadow
+    // root, so the adopted Style_Layer survives. The `icon-*` classes are kept so the
+    // `data-playing` state toggle still swaps them.
+    iconPlay.innerHTML = renderSvgFromDescriptor(audioPlayIcon);
     const iconPause = document.createElement('span');
     iconPause.className = 'icon icon-pause';
+    iconPause.innerHTML = renderSvgFromDescriptor(audioPauseIcon);
     button.appendChild(iconPlay);
     button.appendChild(iconPause);
 

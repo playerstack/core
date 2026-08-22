@@ -32,7 +32,7 @@ describe('playerstack-play-time', () => {
   describe('Markup_Contract (Req 5.1, 5.2, 5.3)', () => {
     it('renders part="time" with current-time and duration spans', () => {
       const { el } = mount();
-      const root = el.shadowRoot as ShadowRoot;
+      const root = el;
 
       expect(root.querySelector('[part="time"]')).not.toBeNull();
       const current = root.querySelector('[part="current-time"]');
@@ -48,14 +48,14 @@ describe('playerstack-play-time', () => {
 
     it('matches the rendered shadow markup snapshot', () => {
       const { el } = mount();
-      expect((el.shadowRoot as ShadowRoot).innerHTML).toMatchSnapshot();
+      expect((el).innerHTML).toMatchSnapshot();
     });
   });
 
   describe('store→display propagation (Req 3.3)', () => {
     it('updates the current-time and duration text from the store', () => {
       const { host, el } = mount();
-      const root = el.shadowRoot as ShadowRoot;
+      const root = el;
 
       host.store.set({ seek: 83, duration: 296 });
 

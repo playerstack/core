@@ -49,7 +49,7 @@ describe('playerstack-audio-controls', () => {
   describe('Markup_Contract (Req 5.1, 5.2, 5.3)', () => {
     it('renders part="audio-controls" with play-button/time/slider/track/track-fill', () => {
       const { el } = mount();
-      const root = el.shadowRoot as ShadowRoot;
+      const root = el;
 
       expect(root.querySelector('[part="audio-controls"]')).not.toBeNull();
       expect(root.querySelector('[part="play-button"]')).not.toBeNull();
@@ -61,14 +61,14 @@ describe('playerstack-audio-controls', () => {
 
     it('matches the rendered shadow markup snapshot', () => {
       const { el } = mount();
-      expect((el.shadowRoot as ShadowRoot).innerHTML).toMatchSnapshot();
+      expect((el).innerHTML).toMatchSnapshot();
     });
   });
 
   describe('store→data-* propagation (Req 3.3)', () => {
     it('reflects data-playing and updates the time text and fill width from the store', () => {
       const { host, el } = mount();
-      const root = el.shadowRoot as ShadowRoot;
+      const root = el;
 
       host.store.set({ playing: true, seek: 25, duration: 100 });
 
@@ -82,7 +82,7 @@ describe('playerstack-audio-controls', () => {
   describe('request-event wiring (Req 2.1)', () => {
     it('emits play/pause requests from the play button based on state', () => {
       const { host, el } = mount();
-      const button = (el.shadowRoot as ShadowRoot).querySelector('[part="play-button"]') as HTMLButtonElement;
+      const button = (el).querySelector('[part="play-button"]') as HTMLButtonElement;
 
       const play: CustomEvent[] = [];
       const pause: CustomEvent[] = [];
@@ -102,7 +102,7 @@ describe('playerstack-audio-controls', () => {
       const { host, el } = mount();
       host.store.set({ duration: 100 });
 
-      const root = el.shadowRoot as ShadowRoot;
+      const root = el;
       const slider = root.querySelector('[part="slider"]') as HTMLElement;
       const track = root.querySelector('[part="track"]') as HTMLElement;
       jest.spyOn(track, 'getBoundingClientRect').mockReturnValue(RECT_100);

@@ -34,7 +34,7 @@ describe('playerstack-captions', () => {
   describe('Markup_Contract (Req 5.1, 5.2, 5.3)', () => {
     it('renders part="captions" with a part="cue" region', () => {
       const { el } = mount();
-      const root = el.shadowRoot as ShadowRoot;
+      const root = el;
 
       expect(root.querySelector('[part="captions"]')).not.toBeNull();
       expect(root.querySelector('[part="cue"]')).not.toBeNull();
@@ -44,7 +44,7 @@ describe('playerstack-captions', () => {
       const { el } = mount();
       (el as unknown as { captionsSrc: VTTCue[] }).captionsSrc = CUES;
       (el.parentElement as PlayerstackMediaController).store.set({ seek: 2 });
-      expect((el.shadowRoot as ShadowRoot).innerHTML).toMatchSnapshot();
+      expect((el).innerHTML).toMatchSnapshot();
     });
   });
 
@@ -55,7 +55,7 @@ describe('playerstack-captions', () => {
 
       host.store.set({ seek: 2 });
 
-      const cue = (el.shadowRoot as ShadowRoot).querySelector('[part="cue"]');
+      const cue = (el).querySelector('[part="cue"]');
       expect(cue?.textContent).toBe('Hello');
       expect(el.getAttribute('data-active')).toBe('true');
     });
@@ -66,7 +66,7 @@ describe('playerstack-captions', () => {
 
       host.store.set({ seek: 10 });
 
-      const cue = (el.shadowRoot as ShadowRoot).querySelector('[part="cue"]');
+      const cue = (el).querySelector('[part="cue"]');
       expect(cue?.textContent).toBe('');
       expect(el.getAttribute('data-active')).toBe('false');
     });
@@ -80,7 +80,7 @@ describe('playerstack-captions', () => {
 
       host.store.set({ seek: 2 });
 
-      const cue = (el.shadowRoot as ShadowRoot).querySelector('[part="cue"]');
+      const cue = (el).querySelector('[part="cue"]');
       expect(cue?.textContent).toBe('Parsed line');
     });
 
@@ -97,7 +97,7 @@ describe('playerstack-captions', () => {
 
       host.store.set({ seek: 2 });
 
-      const cue = (el.shadowRoot as ShadowRoot).querySelector('[part="cue"]');
+      const cue = (el).querySelector('[part="cue"]');
       expect(cue?.textContent).toBe('');
       expect(el.getAttribute('data-active')).toBe('false');
     });
@@ -114,7 +114,7 @@ describe('playerstack-captions', () => {
       (el as unknown as { captionsSrc: VTTCue[] }).captionsSrc = CUES; // detached: guard path
       host.appendChild(el); // connect: render paints from the resolved store state
 
-      const cue = (el.shadowRoot as ShadowRoot).querySelector('[part="cue"]');
+      const cue = (el).querySelector('[part="cue"]');
       expect(cue?.textContent).toBe('Hello');
     });
   });

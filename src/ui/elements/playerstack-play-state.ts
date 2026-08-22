@@ -16,6 +16,8 @@
 import type { PlayStateDefaultLabel, PlayStatePart } from '@typings/ui/playerstack-play-state.types';
 import type { MediaStoreState } from '@typings/ui/media-store.types';
 import { PlayerstackElement } from '@ui/playerstack-element';
+import { renderSvgFromDescriptor } from '@ui/icon-render';
+import { playIcon, pauseIcon, replayIcon } from '@icons/index';
 
 /** Default accessible name used when no `aria-label` attribute is provided (Req 1.5). */
 const DEFAULT_LABEL: PlayStateDefaultLabel = 'Play';
@@ -41,13 +43,28 @@ export class PlayerstackPlayState extends PlayerstackElement {
   private button: HTMLButtonElement | null = null;
 
   /**
-   * Reflects the playing/ended state to `data-playing`/`data-ended` on the host (Req 3.3) and
-   * tracks `playing` for the click handler's play/pause decision. Only the fields this element
-   * cares about are read, per the base class's opt-in `onStoreChange` design.
+   * Reflects the playing/ended state to `data-playing`/`data-ended` on the host (Req 3.3),
+   * tracks `playing` for the click handler's play/pause decision, and derives a single
+   * `data-showing` gate that the Style_Layer keys the center overlay's visibility off.
+   *
+   * WHY a derived `data-showing`: the original reactjs `PlayState` component only mounted the
+   * big center affordance when `!loading && !buffering(waiting) && !kernelMsg && (paused ||
+   * ended)` — it returned `null` while loading / on a kernel status message, and delegated the
+   * `waiting` case to the spinner. `data-playing`/`data-ended` alone cannot express that (they
+   * carry no loading/buffering/kernel info, and reflected booleans are always PRESENT as
+   * `"true"`/`"false"` so a bare `[data-ended]` selector would match during playback). We
+   * therefore compute the exact original `showing` predicate here and reflect it as
+   * `data-showing` (`true` when it must show, else `null` so the attribute is ABSENT). This
+   * keeps the element framework-agnostic (it only reflects a boolean derived from store state)
+   * while letting the CSS hide the overlay — and stop intercepting clicks — during playback.
    */
   override onStoreChange(state: Readonly<MediaStoreState>): void {
     this.playing = state.playing;
-    this.reflectState({ playing: state.playing, ended: state.isEnded });
+    // paused || ended, suppressed while loading/buffering or when a kernel status message is
+    // active (mirrors the original component's early-returns). `null` removes the attribute.
+    const showing =
+      !state.isLoading && !state.isBuffering && state.kernelError == null && (state.playing === false || state.isEnded);
+    this.reflectState({ playing: state.playing, ended: state.isEnded, showing: showing ? true : null });
   }
 
   /**
@@ -78,10 +95,16 @@ export class PlayerstackPlayState extends PlayerstackElement {
     // inactive glyphs based on the reflected `data-playing`/`data-ended` state (Req 3.3).
     const iconPlay = document.createElement('span');
     iconPlay.className = 'icon icon-play';
+    // Inject the real SVG glyph into each span's OWN innerHTML (safe: the serializer escapes
+    // attribute values). The spans belong to this element, not the shadow root, so the adopted
+    // Style_Layer survives. The `icon-*` classes are kept so the state toggle still swaps them.
+    iconPlay.innerHTML = renderSvgFromDescriptor(playIcon);
     const iconPause = document.createElement('span');
     iconPause.className = 'icon icon-pause';
+    iconPause.innerHTML = renderSvgFromDescriptor(pauseIcon);
     const iconReplay = document.createElement('span');
     iconReplay.className = 'icon icon-replay';
+    iconReplay.innerHTML = renderSvgFromDescriptor(replayIcon);
     button.appendChild(iconPlay);
     button.appendChild(iconPause);
     button.appendChild(iconReplay);

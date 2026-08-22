@@ -23,9 +23,10 @@
  * The menu opens on `contextmenu` (right-click) at the pointer position and closes on any
  * document click, on `Escape`, or on the next `contextmenu`. Its open state is reflected as
  * `data-open` on the host (Req 3.3) so the Style_Layer can show/hide the menu through
- * `:host([data-open]) [part='context-menu']`. Each item mirrors the active loop/PiP/
- * fullscreen state via `data-loop`/`data-pip`/`data-fullscreen` so the Style_Layer can render
- * active markers. All listeners are registered with cleanup via `addDisposer`.
+ * `:host([data-open]) [part='context-menu']`. Each item mirrors its active state via
+ * `data-active` so the Style_Layer can render the checked marker. Row visibility is gated by
+ * `adMode`/`live` (loop) and `pipEnabled` (PiP) to match the original menu. All listeners are
+ * registered with cleanup via `addDisposer`.
  */
 import type {
   ContextMenuAction,
@@ -34,16 +35,24 @@ import type {
 } from '@typings/ui/playerstack-context-menu.types';
 import type { MediaStoreState } from '@typings/ui/media-store.types';
 import { PlayerstackElement } from '@ui/playerstack-element';
+import type { IconDescriptor } from '@typings/icons.types';
+import { renderSvgFromDescriptor } from '@ui/icon-render';
+import { inLoopIcon, pipIcon, checkedIcon } from '@icons/index';
 
 /** Default English labels applied when the consumer provides no i18n override (Req 1.5). */
 const DEFAULT_LABELS: ContextMenuDefaultLabels = {
   loop: 'Loop',
   pip: 'Picture in Picture',
-  fullscreen: 'Fullscreen',
 };
 
-/** The action rows the menu renders, in display order. */
-const ACTIONS: readonly ContextMenuAction[] = ['loop', 'pip', 'fullscreen'];
+/** The action rows the menu can render, in display order (parity: original menu = loop + pip). */
+const ACTIONS: readonly ContextMenuAction[] = ['loop', 'pip'];
+
+/** Per-action leading glyph descriptors (parity with the original ICON_MAP loop/pip). */
+const ACTION_ICONS: Record<ContextMenuAction, IconDescriptor> = {
+  loop: inLoopIcon,
+  pip: pipIcon,
+};
 
 export class PlayerstackContextMenu extends PlayerstackElement {
   /**
@@ -58,8 +67,23 @@ export class PlayerstackContextMenu extends PlayerstackElement {
   /** Latest PiP state mirrored from the store; decides the enter/exit PiP request + marker. */
   private pip = false;
 
-  /** Latest fullscreen state mirrored from the store; decides enter/exit + marker. */
-  private fullscreen = false;
+  /**
+   * Ad-mode flag (default `false`). When `true` the LOOP row is dropped — parity with the
+   * original `if (!adMode && !live)` guard: loop can NOT be toggled during an ad.
+   */
+  private _adMode = false;
+
+  /**
+   * Live flag (default `false`). When `true` the LOOP row is dropped too (a live stream can not
+   * loop) — parity with the original `!live` guard.
+   */
+  private _live = false;
+
+  /**
+   * Whether Picture-in-Picture is available (default `true`). When `false` the PiP row is
+   * dropped — parity with the original `if (pictureInPictureEnabled)` guard.
+   */
+  private _pipEnabled = true;
 
   /** Whether the menu is currently open; reflected as `data-open` on the host (Req 3.3). */
   private open = false;
@@ -84,15 +108,65 @@ export class PlayerstackContextMenu extends PlayerstackElement {
   }
 
   /**
-   * Tracks the loop/PiP/fullscreen state this element cares about so each item's request
-   * decision and active marker stay correct (Req 3.3). Only the fields needed are read, per
-   * the base class's opt-in `onStoreChange` design.
+   * Ad-mode setter (default `false`). Re-renders the menu so the LOOP row drops/returns when an
+   * ad starts/ends (parity: loop is unavailable during an ad).
+   */
+  set adMode(value: boolean) {
+    this._adMode = Boolean(value);
+    this.rebuild();
+  }
+
+  get adMode(): boolean {
+    return this._adMode;
+  }
+
+  /** Live setter (default `false`). Re-renders so the LOOP row drops/returns for live streams. */
+  set live(value: boolean) {
+    this._live = Boolean(value);
+    this.rebuild();
+  }
+
+  get live(): boolean {
+    return this._live;
+  }
+
+  /**
+   * PiP-availability setter (default `true`). Re-renders so the PiP row drops when PiP is not
+   * supported (parity with the original `pictureInPictureEnabled` guard).
+   */
+  set pipEnabled(value: boolean) {
+    this._pipEnabled = Boolean(value);
+    this.rebuild();
+  }
+
+  get pipEnabled(): boolean {
+    return this._pipEnabled;
+  }
+
+  /**
+   * The actions actually shown given the current gating (parity with the original
+   * `menuItemsMemorized`): LOOP only when NOT ad and NOT live; PiP only when PiP is available.
+   */
+  private visibleActions(): ContextMenuAction[] {
+    const actions: ContextMenuAction[] = [];
+    if (!this._adMode && !this._live) {
+      actions.push('loop');
+    }
+    if (this._pipEnabled) {
+      actions.push('pip');
+    }
+    return actions;
+  }
+
+  /**
+   * Tracks the loop/PiP state this element cares about so each item's request decision and
+   * active marker stay correct (Req 3.3). Only the fields needed are read, per the base class's
+   * opt-in `onStoreChange` design.
    */
   override onStoreChange(state: Readonly<MediaStoreState>): void {
     this.loop = state.loop;
     this.pip = state.isPIP;
-    this.fullscreen = state.isFullScreen;
-    this.reflectState({ loop: state.loop, pip: state.isPIP, fullscreen: state.isFullScreen });
+    this.reflectState({ loop: state.loop, pip: state.isPIP });
     this.markActiveItems();
   }
 
@@ -106,16 +180,37 @@ export class PlayerstackContextMenu extends PlayerstackElement {
 
   /**
    * Opens the menu at the pointer position (Req 3.3). The `contextmenu` default (the browser's
-   * native menu) is prevented so the player's menu takes over. Position is expressed as
-   * `--playerstack-context-menu-x/-y` custom properties on the host so the Style_Layer places
-   * the menu without this element hard-coding layout.
+   * native menu) is prevented so the player's menu takes over. Position is computed RELATIVE to
+   * the player box (the `playerstack-media-controller` ancestor) and CLAMPED so the menu never
+   * spills past the right/bottom edge — mirroring the original `handleContextMenu`, which used
+   * the container rect and subtracted the menu size when it would overflow. The clamped x/y are
+   * written as `--playerstack-context-menu-x/-y` custom properties the Style_Layer consumes.
    */
   private openAt(event: MouseEvent): void {
     event.preventDefault();
+
+    // The clamping box is the player stage (this element is absolutely positioned to fill it).
+    const stage = this.closest('playerstack-media-controller') ?? this;
+    const rect = stage.getBoundingClientRect();
+    let relativeX = event.clientX - rect.left;
+    let relativeY = event.clientY - rect.top;
+
+    // Measure the menu so we can flip it back inside the box when it would overflow. The menu
+    // is rendered but hidden (display via data-open); read its size after making it measurable.
+    // We set data-open first so the menu has layout, then measure + clamp.
     this.open = true;
-    this.style.setProperty('--playerstack-context-menu-x', `${event.clientX}px`);
-    this.style.setProperty('--playerstack-context-menu-y', `${event.clientY}px`);
     this.setAttribute('data-open', 'true');
+    const menuWidth = this.menu?.offsetWidth ?? 0;
+    const menuHeight = this.menu?.offsetHeight ?? 0;
+    if (relativeX + menuWidth > rect.width) {
+      relativeX = Math.max(0, relativeX - menuWidth);
+    }
+    if (relativeY + menuHeight > rect.height) {
+      relativeY = Math.max(0, relativeY - menuHeight);
+    }
+
+    this.style.setProperty('--playerstack-context-menu-x', `${relativeX}px`);
+    this.style.setProperty('--playerstack-context-menu-y', `${relativeY}px`);
   }
 
   /** Closes the menu and clears the reflected `data-open` state (Req 3.3). */
@@ -136,12 +231,8 @@ export class PlayerstackContextMenu extends PlayerstackElement {
   private selectAction(action: ContextMenuAction): void {
     if (action === 'loop') {
       this.dispatchRequest('playerstack-loop-request', { loop: !this.loop });
-    } else if (action === 'pip') {
-      this.dispatchRequest(this.pip ? 'playerstack-exit-pip-request' : 'playerstack-enter-pip-request');
     } else {
-      this.dispatchRequest(
-        this.fullscreen ? 'playerstack-exit-fullscreen-request' : 'playerstack-enter-fullscreen-request',
-      );
+      this.dispatchRequest(this.pip ? 'playerstack-exit-pip-request' : 'playerstack-enter-pip-request');
     }
     this.close();
   }
@@ -163,30 +254,22 @@ export class PlayerstackContextMenu extends PlayerstackElement {
     menu.setAttribute('part', 'context-menu');
     menu.setAttribute('role', 'menu');
 
-    for (const action of ACTIONS) {
-      const item = document.createElement('button');
-      item.setAttribute('type', 'button');
-      item.setAttribute('part', 'context-menu-item');
-      item.setAttribute('role', 'menuitem');
-      item.setAttribute('data-action', action);
-      item.textContent = this.resolveLabel(action);
-
-      const onItemClick = (): void => this.selectAction(action);
-      item.addEventListener('click', onItemClick);
-      this.addDisposer(() => item.removeEventListener('click', onItemClick));
-
-      this.items[action] = item;
-      menu.appendChild(item);
-    }
-
     this.menu = menu;
     // Append (never clobber) so the adopted Style_Layer / fallback `<style>` survives.
     this.root.appendChild(menu);
 
-    // Open on right-click over the host; close on outside click / Escape / next right-click.
-    const onContextMenu = (event: MouseEvent): void => this.openAt(event);
-    this.addEventListener('contextmenu', onContextMenu);
-    this.addDisposer(() => this.removeEventListener('contextmenu', onContextMenu));
+    // Build the initial item rows from the current gating.
+    this.buildItems();
+
+    // Open on right-click. The listener lives on the PLAYER STAGE (the controller ancestor),
+    // NOT on this element: the context-menu host is `pointer-events:none` (so it never swallows
+    // clicks over the video), which also means it can't receive `contextmenu` itself. Delegating
+    // to the stage — which does receive pointer events over the whole player — restores the
+    // right-click trigger exactly like the original `onContextMenu` on the player container.
+    const stage = this.closest('playerstack-media-controller') ?? this;
+    const onContextMenu = (event: Event): void => this.openAt(event as MouseEvent);
+    stage.addEventListener('contextmenu', onContextMenu);
+    this.addDisposer(() => stage.removeEventListener('contextmenu', onContextMenu));
 
     // A document click anywhere dismisses the menu (including clicks inside it, after the
     // item handler has already run and closed it — the guard in `close` makes that a no-op).
@@ -207,34 +290,96 @@ export class PlayerstackContextMenu extends PlayerstackElement {
     if (state !== undefined) {
       this.loop = state.loop;
       this.pip = state.isPIP;
-      this.fullscreen = state.isFullScreen;
     }
     this.markActiveItems();
   }
 
   /**
-   * Updates each item's label from the resolved i18n after the labels change post-render.
-   * No-op before `render` created the items.
+   * (Re)builds the item rows into the menu from the currently VISIBLE actions (`visibleActions`),
+   * so ad/live/pip-availability gating adds or removes rows. Clears the previous rows first and
+   * re-marks the active state afterwards. No-op before `render` created the menu container.
+   */
+  private buildItems(): void {
+    if (this.menu === null) {
+      return;
+    }
+    this.menu.replaceChildren();
+    this.items = {};
+
+    for (const action of this.visibleActions()) {
+      const item = document.createElement('button');
+      item.setAttribute('type', 'button');
+      item.setAttribute('part', 'context-menu-item');
+      item.setAttribute('role', 'menuitem');
+      item.setAttribute('data-action', action);
+
+      // Leading glyph (parity with the original ICON_MAP: loop/pip icons before the label).
+      const icon = document.createElement('span');
+      icon.className = 'icon';
+      icon.setAttribute('part', 'context-menu-icon');
+      icon.innerHTML = renderSvgFromDescriptor(ACTION_ICONS[action]);
+      item.appendChild(icon);
+
+      // Label (StyledContextMenuLabel).
+      const label = document.createElement('span');
+      label.setAttribute('part', 'context-menu-label');
+      label.textContent = this.resolveLabel(action);
+      item.appendChild(label);
+
+      // Checked marker (StyledContextMenuChecked): only the loop item is checkable; its
+      // visibility is driven by `data-active` on the item (loop engaged) via the Style_Layer.
+      if (action === 'loop') {
+        const check = document.createElement('span');
+        check.setAttribute('part', 'context-menu-checked');
+        check.innerHTML = renderSvgFromDescriptor(checkedIcon);
+        item.appendChild(check);
+      }
+
+      const onItemClick = (): void => this.selectAction(action);
+      item.addEventListener('click', onItemClick);
+      this.addDisposer(() => item.removeEventListener('click', onItemClick));
+
+      this.items[action] = item;
+      this.menu.appendChild(item);
+    }
+
+    this.markActiveItems();
+  }
+
+  /** Rebuilds the item rows when a gating flag changes. No-op before the menu exists. */
+  private rebuild(): void {
+    if (this.menu === null) {
+      return;
+    }
+    this.buildItems();
+  }
+
+  /**
+   * Updates each visible item's label from the resolved i18n after the labels change
+   * post-render. No-op before `render` created the items.
    */
   private applyLabels(): void {
     for (const action of ACTIONS) {
       const item = this.items[action];
-      if (item !== undefined) {
-        item.textContent = this.resolveLabel(action);
+      if (item === undefined) {
+        continue;
+      }
+      const label = item.querySelector('[part="context-menu-label"]');
+      if (label !== null) {
+        label.textContent = this.resolveLabel(action);
       }
     }
   }
 
   /**
-   * Marks each action item with its active state (`data-active`) so the Style_Layer can render
-   * an active marker on loop/PiP/fullscreen when currently engaged (Req 3.3). No-op before
-   * `render` created the items.
+   * Marks each visible action item with its active state (`data-active`) so the Style_Layer can
+   * render an active marker on loop/PiP when currently engaged (Req 3.3). Iterates the RENDERED
+   * items so gated-out rows are skipped. No-op before `render` created the items.
    */
   private markActiveItems(): void {
     const activeByAction: Record<ContextMenuAction, boolean> = {
       loop: this.loop,
       pip: this.pip,
-      fullscreen: this.fullscreen,
     };
     for (const action of ACTIONS) {
       const item = this.items[action];

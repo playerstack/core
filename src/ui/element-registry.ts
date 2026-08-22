@@ -34,6 +34,7 @@ import { PlayerstackLiveIndicator } from '@ui/elements/playerstack-live-indicato
 import { PlayerstackDoubleTap } from '@ui/elements/playerstack-double-tap';
 import { PlayerstackIcon } from '@ui/elements/playerstack-icon';
 import { PlayerstackNavButtons } from '@ui/elements/playerstack-nav-buttons';
+import { PlayerstackMobileSettings } from '@ui/elements/playerstack-mobile-settings';
 
 export const PLAYERSTACK_ELEMENTS: readonly PlayerstackElementDefinition[] = [
   // Root host element (task 8.1); other UI_Element tasks (8.x / 9.x) append their own
@@ -60,4 +61,5 @@ export const PLAYERSTACK_ELEMENTS: readonly PlayerstackElementDefinition[] = [
   { name: 'playerstack-double-tap', ctor: PlayerstackDoubleTap },
   { name: 'playerstack-icon', ctor: PlayerstackIcon },
   { name: 'playerstack-nav-buttons', ctor: PlayerstackNavButtons },
+  { name: 'playerstack-mobile-settings', ctor: PlayerstackMobileSettings },
 ];

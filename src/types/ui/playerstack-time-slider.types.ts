@@ -18,7 +18,20 @@ import type { SpriteCue } from '@typings/sprite.types';
  *   - `timelens` positions the sprite thumbnail preview shown while hovering.
  */
 export type TimeSliderPart =
-  'time-slider' | 'slider' | 'track' | 'track-fill' | 'track-buffered' | 'thumb' | 'tooltip' | 'timelens';
+  | 'time-slider'
+  | 'slider'
+  | 'track'
+  | 'track-fill'
+  | 'track-buffered'
+  | 'thumb'
+  | 'tooltip'
+  | 'tooltip-time'
+  | 'tooltip-chapter'
+  | 'timelens'
+  | 'chapters'
+  | 'chapter-segment'
+  | 'chapter-segment-buffered'
+  | 'chapter-segment-filled';
 
 /**
  * Default accessible name applied to the slider when the consumer does not set an

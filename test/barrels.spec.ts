@@ -71,8 +71,7 @@ describe('@playerstack/core/styles barrel', () => {
   });
 
   it('re-exports the Style_Auto_Injection API', () => {
-    expect(typeof styles.getSharedStyleSheet).toBe('function');
-    expect(typeof styles.adoptPlayerstackStyles).toBe('function');
+    expect(typeof styles.ensurePlayerstackStyles).toBe('function');
     expect(typeof styles.ensureGlobalTokens).toBe('function');
   });
 });

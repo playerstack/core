@@ -14,26 +14,28 @@ import type { UIControllerConfig } from '@typings/ui-controller.types';
  *   - `context-menu` is the container; it carries the reflected `data-open` state when the
  *     menu is showing and is positioned at the pointer on right-click.
  *   - `context-menu-item` is each action row (loop / PiP / fullscreen). Each item carries a
- *     `data-action` hook and a reflected active marker (`data-loop`/`data-pip`/
- *     `data-fullscreen`) mirrored from the store.
+ *     `data-action` hook and a reflected active marker (`data-active`) mirrored from the store.
+ *   - `context-menu-icon` is the leading glyph, `context-menu-label` the text, and
+ *     `context-menu-checked` the trailing check shown on the active loop item.
  */
-export type ContextMenuPart = 'context-menu' | 'context-menu-item';
+export type ContextMenuPart =
+  'context-menu' | 'context-menu-item' | 'context-menu-icon' | 'context-menu-label' | 'context-menu-checked';
 
 /**
  * The three context-menu actions, matching the classic right-click menu (loop / PiP /
  * fullscreen). Kept as a named union so the element and tests agree on the action set and the
  * `data-action` values reflected on each item.
  */
-export type ContextMenuAction = 'loop' | 'pip' | 'fullscreen';
+export type ContextMenuAction = 'loop' | 'pip';
 
 /**
  * Default English labels applied to each action when the consumer does not provide an i18n
- * override (Req 1.5). Named type so the element and tests agree on the defaults.
+ * override (Req 1.5). Named type so the element and tests agree on the defaults. Parity: the
+ * original right-click menu offered only Loop + Picture in Picture (no Fullscreen row).
  */
 export interface ContextMenuDefaultLabels {
   loop: 'Loop';
   pip: 'Picture in Picture';
-  fullscreen: 'Fullscreen';
 }
 
 /**

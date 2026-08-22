@@ -35,7 +35,7 @@ describe('playerstack-double-tap', () => {
   describe('Markup_Contract (Req 5.1, 5.2, 5.3)', () => {
     it('renders part="double-tap" with left/right zones and a skip-indicator', () => {
       const { el } = mount();
-      const root = el.shadowRoot as ShadowRoot;
+      const root = el;
 
       expect(root.querySelector('[part="double-tap"]')).not.toBeNull();
       expect(root.querySelector('[part="double-tap-left"]')).not.toBeNull();
@@ -45,7 +45,7 @@ describe('playerstack-double-tap', () => {
 
     it('matches the rendered shadow markup snapshot', () => {
       const { el } = mount();
-      expect((el.shadowRoot as ShadowRoot).innerHTML).toMatchSnapshot();
+      expect((el).innerHTML).toMatchSnapshot();
     });
   });
 
@@ -57,7 +57,7 @@ describe('playerstack-double-tap', () => {
       const received: Array<CustomEvent<{ time: number }>> = [];
       document.addEventListener('playerstack-seek-request', (e) => received.push(e as CustomEvent<{ time: number }>));
 
-      const right = (el.shadowRoot as ShadowRoot).querySelector('[part="double-tap-right"]') as HTMLElement;
+      const right = (el).querySelector('[part="double-tap-right"]') as HTMLElement;
       right.click();
       right.click();
 
@@ -66,7 +66,7 @@ describe('playerstack-double-tap', () => {
       expect(el.getAttribute('data-active')).toBe('true');
       // `reflectStateToAttributes` JSON-encodes values, so the string direction is quoted.
       expect(el.getAttribute('data-direction')).toBe('"forward"');
-      const indicator = (el.shadowRoot as ShadowRoot).querySelector('[part="skip-indicator"]');
+      const indicator = (el).querySelector('[part="skip-indicator"]');
       expect(indicator?.textContent).toBe('10');
     });
 
@@ -77,7 +77,7 @@ describe('playerstack-double-tap', () => {
       const received: Array<CustomEvent<{ time: number }>> = [];
       document.addEventListener('playerstack-seek-request', (e) => received.push(e as CustomEvent<{ time: number }>));
 
-      const left = (el.shadowRoot as ShadowRoot).querySelector('[part="double-tap-left"]') as HTMLElement;
+      const left = (el).querySelector('[part="double-tap-left"]') as HTMLElement;
       left.click();
       left.click();
 
@@ -95,7 +95,7 @@ describe('playerstack-double-tap', () => {
       const received: Event[] = [];
       document.addEventListener('playerstack-seek-request', (e) => received.push(e));
 
-      const right = (el.shadowRoot as ShadowRoot).querySelector('[part="double-tap-right"]') as HTMLElement;
+      const right = (el).querySelector('[part="double-tap-right"]') as HTMLElement;
       right.click();
       // Let the double-tap window elapse so the controller resolves it as a single tap
       // (which the element observes as a no-op, not a skip).
@@ -116,7 +116,7 @@ describe('playerstack-double-tap', () => {
       const received: Array<CustomEvent<{ time: number }>> = [];
       document.addEventListener('playerstack-seek-request', (e) => received.push(e as CustomEvent<{ time: number }>));
 
-      const right = (el.shadowRoot as ShadowRoot).querySelector('[part="double-tap-right"]') as HTMLElement;
+      const right = (el).querySelector('[part="double-tap-right"]') as HTMLElement;
       right.click();
       right.click();
 
@@ -132,7 +132,7 @@ describe('playerstack-double-tap', () => {
       const received: Array<CustomEvent<{ time: number }>> = [];
       document.addEventListener('playerstack-seek-request', (e) => received.push(e as CustomEvent<{ time: number }>));
 
-      const right = (el.shadowRoot as ShadowRoot).querySelector('[part="double-tap-right"]') as HTMLElement;
+      const right = (el).querySelector('[part="double-tap-right"]') as HTMLElement;
       right.click();
       right.click();
 

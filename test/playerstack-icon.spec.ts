@@ -32,7 +32,7 @@ describe('playerstack-icon', () => {
   describe('Markup_Contract (Req 5.1, 5.3)', () => {
     it('renders a part="icon" wrapper span', () => {
       const el = mount();
-      const wrapper = (el.shadowRoot as ShadowRoot).querySelector('[part="icon"]');
+      const wrapper = (el).querySelector('[part="icon"]');
       expect(wrapper).not.toBeNull();
       expect(wrapper?.tagName.toLowerCase()).toBe('span');
     });
@@ -41,7 +41,7 @@ describe('playerstack-icon', () => {
       const el = mount();
       (el as unknown as { icon: IconDescriptor }).icon = ICON;
 
-      const wrapper = (el.shadowRoot as ShadowRoot).querySelector('[part="icon"]') as HTMLElement;
+      const wrapper = (el).querySelector('[part="icon"]') as HTMLElement;
       expect(wrapper.innerHTML).toContain('<svg');
       expect(wrapper.innerHTML).toContain('viewBox="0 0 24 24"');
       expect(wrapper.innerHTML).toContain('<path');
@@ -53,7 +53,7 @@ describe('playerstack-icon', () => {
       (el as unknown as { icon: IconDescriptor }).icon = ICON;
       (el as unknown as { size: RenderSvgOptions }).size = { width: 24 };
 
-      const wrapper = (el.shadowRoot as ShadowRoot).querySelector('[part="icon"]') as HTMLElement;
+      const wrapper = (el).querySelector('[part="icon"]') as HTMLElement;
       expect(wrapper.innerHTML).toContain('width="24"');
     });
 
@@ -61,7 +61,7 @@ describe('playerstack-icon', () => {
       const el = mount();
       (el as unknown as { icon: IconDescriptor }).icon = ICON;
       (el as unknown as { size: RenderSvgOptions }).size = { width: 24 };
-      expect((el.shadowRoot as ShadowRoot).innerHTML).toMatchSnapshot();
+      expect((el).innerHTML).toMatchSnapshot();
     });
   });
 
@@ -78,9 +78,7 @@ describe('playerstack-icon', () => {
       el.size = { width: 30, height: 30 };
       expect(el.size).toEqual({ width: 30, height: 30 });
 
-      const wrapper = ((el as unknown as HTMLElement).shadowRoot as ShadowRoot).querySelector(
-        '[part="icon"]',
-      ) as HTMLElement;
+      const wrapper = (el as unknown as HTMLElement).querySelector('[part="icon"]') as HTMLElement;
       expect(wrapper.innerHTML).toContain('width="30"');
       expect(wrapper.innerHTML).toContain('height="30"');
     });
@@ -97,9 +95,7 @@ describe('playerstack-icon', () => {
       el.icon = ICON;
       el.icon = null;
 
-      const wrapper = ((el as unknown as HTMLElement).shadowRoot as ShadowRoot).querySelector(
-        '[part="icon"]',
-      ) as HTMLElement;
+      const wrapper = (el as unknown as HTMLElement).querySelector('[part="icon"]') as HTMLElement;
       expect(wrapper.innerHTML).toBe('');
     });
 
@@ -110,7 +106,7 @@ describe('playerstack-icon', () => {
       (el as unknown as { icon: IconDescriptor }).icon = ICON; // detached: guard path
       document.body.appendChild(el); // connect: render + paint
 
-      const wrapper = (el.shadowRoot as ShadowRoot).querySelector('[part="icon"]') as HTMLElement;
+      const wrapper = (el).querySelector('[part="icon"]') as HTMLElement;
       expect(wrapper.innerHTML).toContain('<svg');
     });
 
@@ -121,7 +117,7 @@ describe('playerstack-icon', () => {
       el.remove();
       document.body.appendChild(el);
 
-      const wrappers = (el.shadowRoot as ShadowRoot).querySelectorAll('[part="icon"]');
+      const wrappers = (el).querySelectorAll('[part="icon"]');
       expect(wrappers).toHaveLength(1);
     });
   });
@@ -132,7 +128,7 @@ describe('playerstack-icon', () => {
       (el as unknown as { icon: IconDescriptor }).icon = ICON;
       el.setAttribute('width', '48');
 
-      const wrapper = (el.shadowRoot as ShadowRoot).querySelector('[part="icon"]') as HTMLElement;
+      const wrapper = (el).querySelector('[part="icon"]') as HTMLElement;
       expect(wrapper.innerHTML).toContain('width="48"');
     });
 
@@ -142,21 +138,21 @@ describe('playerstack-icon', () => {
       el.setAttribute('height', '48');
       el.removeAttribute('height');
 
-      const wrapper = (el.shadowRoot as ShadowRoot).querySelector('[part="icon"]') as HTMLElement;
+      const wrapper = (el).querySelector('[part="icon"]') as HTMLElement;
       expect(wrapper.innerHTML).not.toContain('height="48"');
     });
 
     it('ignores attribute changes that are not width/height', () => {
       const el = mount();
       (el as unknown as { icon: IconDescriptor }).icon = ICON;
-      const before = ((el.shadowRoot as ShadowRoot).querySelector('[part="icon"]') as HTMLElement).innerHTML;
+      const before = ((el).querySelector('[part="icon"]') as HTMLElement).innerHTML;
 
       // `role` is not part of the icon's attributeSchema, so onAttributeChanged early-returns.
       (
         el as unknown as { onAttributeChanged: (k: string, v: string | number | boolean) => void }
       ).onAttributeChanged('role', 'img');
 
-      const after = ((el.shadowRoot as ShadowRoot).querySelector('[part="icon"]') as HTMLElement).innerHTML;
+      const after = ((el).querySelector('[part="icon"]') as HTMLElement).innerHTML;
       expect(after).toBe(before);
     });
   });

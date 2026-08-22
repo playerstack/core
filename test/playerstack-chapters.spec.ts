@@ -34,7 +34,7 @@ describe('playerstack-chapters', () => {
   describe('Markup_Contract (Req 5.1, 5.2, 5.3)', () => {
     it('renders part="chapters" with a part="chapter-title" region', () => {
       const { el } = mount();
-      const root = el.shadowRoot as ShadowRoot;
+      const root = el;
 
       expect(root.querySelector('[part="chapters"]')).not.toBeNull();
       expect(root.querySelector('[part="chapter-title"]')).not.toBeNull();
@@ -44,7 +44,7 @@ describe('playerstack-chapters', () => {
       const { host, el } = mount();
       (el as unknown as { chapters: ChapterInput[] }).chapters = CHAPTERS;
       host.store.set({ duration: 100, seek: 50 });
-      expect((el.shadowRoot as ShadowRoot).innerHTML).toMatchSnapshot();
+      expect((el).innerHTML).toMatchSnapshot();
     });
   });
 
@@ -55,7 +55,7 @@ describe('playerstack-chapters', () => {
 
       host.store.set({ duration: 100, seek: 50 });
 
-      const title = (el.shadowRoot as ShadowRoot).querySelector('[part="chapter-title"]');
+      const title = (el).querySelector('[part="chapter-title"]');
       expect(title?.textContent).toBe('Middle');
       expect(el.getAttribute('data-active')).toBe('true');
     });
@@ -66,7 +66,7 @@ describe('playerstack-chapters', () => {
 
       host.store.set({ duration: 100, seek: 90 });
 
-      const title = (el.shadowRoot as ShadowRoot).querySelector('[part="chapter-title"]');
+      const title = (el).querySelector('[part="chapter-title"]');
       expect(title?.textContent).toBe('Outro');
     });
   });
@@ -85,7 +85,7 @@ describe('playerstack-chapters', () => {
 
       host.store.set({ duration: 100, seek: 50 });
 
-      const title = (el.shadowRoot as ShadowRoot).querySelector('[part="chapter-title"]');
+      const title = (el).querySelector('[part="chapter-title"]');
       expect(title?.textContent).toBe('');
       expect(el.getAttribute('data-active')).toBe('false');
     });
@@ -102,7 +102,7 @@ describe('playerstack-chapters', () => {
       (el as unknown as { chapters: ChapterInput[] }).chapters = CHAPTERS; // detached: guard path
       host.appendChild(el); // connect: render recomputes + paints from resolved store state
 
-      const title = (el.shadowRoot as ShadowRoot).querySelector('[part="chapter-title"]');
+      const title = (el).querySelector('[part="chapter-title"]');
       expect(title?.textContent).toBe('Middle');
     });
   });

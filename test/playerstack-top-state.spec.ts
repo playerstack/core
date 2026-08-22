@@ -31,7 +31,7 @@ describe('playerstack-top-state', () => {
   describe('Markup_Contract (Req 5.1, 5.2, 5.3)', () => {
     it('renders part="top-state" with a part="top-state-message" region', () => {
       const { el } = mount();
-      const root = el.shadowRoot as ShadowRoot;
+      const root = el;
 
       expect(root.querySelector('[part="top-state"]')).not.toBeNull();
       expect(root.querySelector('[part="top-state-message"]')).not.toBeNull();
@@ -40,7 +40,7 @@ describe('playerstack-top-state', () => {
     it('matches the rendered shadow markup snapshot', () => {
       const { host, el } = mount('en');
       host.store.set({ kernelError: new Error('x') });
-      expect((el.shadowRoot as ShadowRoot).innerHTML).toMatchSnapshot();
+      expect((el).innerHTML).toMatchSnapshot();
     });
   });
 
@@ -50,7 +50,7 @@ describe('playerstack-top-state', () => {
 
       host.store.set({ kernelError: new Error('x') });
 
-      const message = (el.shadowRoot as ShadowRoot).querySelector('[part="top-state-message"]');
+      const message = (el).querySelector('[part="top-state-message"]');
       expect(message?.textContent).toBe(getTranslations('en').playbackStuckClickResumePlayback);
       expect(el.getAttribute('data-active')).toBe('true');
     });
@@ -60,7 +60,7 @@ describe('playerstack-top-state', () => {
 
       host.store.set({ kernelError: null });
 
-      const message = (el.shadowRoot as ShadowRoot).querySelector('[part="top-state-message"]');
+      const message = (el).querySelector('[part="top-state-message"]');
       expect(message?.textContent).toBe('');
       expect(el.getAttribute('data-active')).toBe('false');
     });

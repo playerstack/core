@@ -42,7 +42,7 @@ describe('playerstack-live-indicator', () => {
   describe('Markup_Contract (Req 5.1, 5.2, 5.3)', () => {
     it('renders part="live-indicator" with a dot and an offset region', () => {
       const { el } = mount();
-      const root = el.shadowRoot as ShadowRoot;
+      const root = el;
 
       expect(root.querySelector('[part="live-indicator"]')).not.toBeNull();
       expect(root.querySelector('[part="live-dot"]')).not.toBeNull();
@@ -52,7 +52,7 @@ describe('playerstack-live-indicator', () => {
     it('matches the rendered shadow markup snapshot', () => {
       const { el } = mount();
       (el as unknown as { dvrState: LiveDVRState }).dvrState = BEHIND_LIVE;
-      expect((el.shadowRoot as ShadowRoot).innerHTML).toMatchSnapshot();
+      expect((el).innerHTML).toMatchSnapshot();
     });
   });
 
@@ -63,7 +63,7 @@ describe('playerstack-live-indicator', () => {
 
       expect(el.getAttribute('data-live')).toBe('true');
       expect(el.getAttribute('data-at-edge')).toBe('false');
-      const offset = (el.shadowRoot as ShadowRoot).querySelector('[part="live-offset"]');
+      const offset = (el).querySelector('[part="live-offset"]');
       expect(offset?.textContent).toBe(formatLiveOffset(-80, false));
       expect(offset?.textContent).toBe('-1:20');
     });
@@ -77,7 +77,7 @@ describe('playerstack-live-indicator', () => {
       const received: Array<CustomEvent<{ time: number }>> = [];
       document.addEventListener('playerstack-seek-request', (e) => received.push(e as CustomEvent<{ time: number }>));
 
-      (el.shadowRoot as ShadowRoot).querySelector<HTMLElement>('[part="live-indicator"]')?.click();
+      (el).querySelector<HTMLElement>('[part="live-indicator"]')?.click();
 
       expect(received).toHaveLength(1);
       expect(received[0]?.detail.time).toBe(200);
@@ -90,7 +90,7 @@ describe('playerstack-live-indicator', () => {
       const received: CustomEvent[] = [];
       document.addEventListener('playerstack-seek-request', (e) => received.push(e as CustomEvent));
 
-      (el.shadowRoot as ShadowRoot).querySelector<HTMLElement>('[part="live-indicator"]')?.click();
+      (el).querySelector<HTMLElement>('[part="live-indicator"]')?.click();
 
       expect(received).toHaveLength(0);
     });

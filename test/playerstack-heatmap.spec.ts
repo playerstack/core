@@ -36,7 +36,7 @@ describe('playerstack-heatmap', () => {
   describe('Markup_Contract (Req 5.1, 5.2, 5.3)', () => {
     it('renders part="heatmap" with an inline svg and a path', () => {
       const { el } = mount();
-      const root = el.shadowRoot as ShadowRoot;
+      const root = el;
 
       expect(root.querySelector('[part="heatmap"]')).not.toBeNull();
       const svg = root.querySelector('[part="heatmap-svg"]');
@@ -49,7 +49,7 @@ describe('playerstack-heatmap', () => {
       const { host, el } = mount();
       (el as unknown as { heatmapData: HeatmapDataPoint[] }).heatmapData = HEATMAP;
       host.store.set({ duration: 100 });
-      expect((el.shadowRoot as ShadowRoot).innerHTML).toMatchSnapshot();
+      expect((el).innerHTML).toMatchSnapshot();
     });
   });
 
@@ -60,7 +60,7 @@ describe('playerstack-heatmap', () => {
 
       host.store.set({ duration: 100 });
 
-      const path = (el.shadowRoot as ShadowRoot).querySelector('[part="heatmap-path"]');
+      const path = (el).querySelector('[part="heatmap-path"]');
       expect(path?.getAttribute('d')?.length).toBeGreaterThan(0);
       expect(el.getAttribute('data-active')).toBe('true');
     });
@@ -79,7 +79,7 @@ describe('playerstack-heatmap', () => {
       host.store.set({ duration: 100 });
       (el as unknown as { heatmapData: HeatmapDataPoint[] | null }).heatmapData = null;
 
-      const path = (el.shadowRoot as ShadowRoot).querySelector('[part="heatmap-path"]');
+      const path = (el).querySelector('[part="heatmap-path"]');
       expect(path?.getAttribute('d')).toBe('');
       expect(el.getAttribute('data-active')).toBe('false');
     });
@@ -96,7 +96,7 @@ describe('playerstack-heatmap', () => {
       (el as unknown as { heatmapData: HeatmapDataPoint[] }).heatmapData = HEATMAP; // detached: guard path
       host.appendChild(el); // connect: render computes path from resolved store state
 
-      const path = (el.shadowRoot as ShadowRoot).querySelector('[part="heatmap-path"]');
+      const path = (el).querySelector('[part="heatmap-path"]');
       expect((path?.getAttribute('d')?.length ?? 0) > 0).toBe(true);
       expect(el.getAttribute('data-active')).toBe('true');
     });

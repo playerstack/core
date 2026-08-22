@@ -26,7 +26,7 @@ describe('playerstack-spinner', () => {
   describe('Markup_Contract (Req 5.1, 5.2, 5.3)', () => {
     it('renders part="spinner" with a part="spinner-indicator" glyph', () => {
       const { el } = mount();
-      const root = el.shadowRoot as ShadowRoot;
+      const root = el;
 
       expect(root.querySelector('[part="spinner"]')).not.toBeNull();
       expect(root.querySelector('[part="spinner-indicator"]')).not.toBeNull();
@@ -34,7 +34,7 @@ describe('playerstack-spinner', () => {
 
     it('matches the rendered shadow markup snapshot', () => {
       const { el } = mount();
-      expect((el.shadowRoot as ShadowRoot).innerHTML).toMatchSnapshot();
+      expect((el).innerHTML).toMatchSnapshot();
     });
   });
 
@@ -46,7 +46,7 @@ describe('playerstack-spinner', () => {
 
       expect(el.getAttribute('data-loading')).toBe('true');
       expect(el.getAttribute('data-active')).toBe('true');
-      const container = (el.shadowRoot as ShadowRoot).querySelector('[part="spinner"]') as HTMLElement;
+      const container = (el).querySelector('[part="spinner"]') as HTMLElement;
       expect(container.style.display).toBe('flex');
     });
 
@@ -56,7 +56,7 @@ describe('playerstack-spinner', () => {
       host.store.set({ isLoading: false, isBuffering: false });
 
       expect(el.getAttribute('data-active')).toBe('false');
-      const container = (el.shadowRoot as ShadowRoot).querySelector('[part="spinner"]') as HTMLElement;
+      const container = (el).querySelector('[part="spinner"]') as HTMLElement;
       expect(container.style.display).toBe('none');
     });
 
@@ -76,7 +76,7 @@ describe('playerstack-spinner', () => {
       el.remove();
       document.body.appendChild(el);
 
-      const containers = (el.shadowRoot as ShadowRoot).querySelectorAll('[part="spinner"]');
+      const containers = (el).querySelectorAll('[part="spinner"]');
       expect(containers).toHaveLength(1);
     });
 
@@ -90,7 +90,7 @@ describe('playerstack-spinner', () => {
       const el = document.createElement('playerstack-spinner');
       host.appendChild(el);
 
-      const container = (el.shadowRoot as ShadowRoot).querySelector('[part="spinner"]') as HTMLElement;
+      const container = (el).querySelector('[part="spinner"]') as HTMLElement;
       expect(container.style.display).toBe('flex');
     });
   });

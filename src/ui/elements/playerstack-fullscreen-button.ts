@@ -24,6 +24,8 @@
 import type { FullscreenButtonDefaultLabel } from '@typings/ui/playerstack-fullscreen-button.types';
 import type { MediaStoreState } from '@typings/ui/media-store.types';
 import { PlayerstackElement } from '@ui/playerstack-element';
+import { renderSvgFromDescriptor } from '@ui/icon-render';
+import { fullscreenIcon, unfullscreenIcon } from '@icons/index';
 
 /** Default accessible name used when no `aria-label` attribute is provided (Req 1.5). */
 const DEFAULT_LABEL: FullscreenButtonDefaultLabel = 'Fullscreen';
@@ -81,8 +83,13 @@ export class PlayerstackFullscreenButton extends PlayerstackElement {
     // glyph based on the reflected `data-fullscreen` state (Req 3.3).
     const iconEnter = document.createElement('span');
     iconEnter.className = 'icon icon-enter-fullscreen';
+    // Inject the real SVG glyph into each span's OWN innerHTML (safe: the serializer escapes
+    // attribute values). The spans belong to this element, not the shadow root, so the adopted
+    // Style_Layer survives. The `icon-*` classes are kept so the state toggle still swaps them.
+    iconEnter.innerHTML = renderSvgFromDescriptor(fullscreenIcon);
     const iconExit = document.createElement('span');
     iconExit.className = 'icon icon-exit-fullscreen';
+    iconExit.innerHTML = renderSvgFromDescriptor(unfullscreenIcon);
     button.appendChild(iconEnter);
     button.appendChild(iconExit);
 

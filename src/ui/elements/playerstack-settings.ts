@@ -26,6 +26,8 @@ import type { SettingsOption } from '@typings/ui.types';
 import type { MediaStoreState } from '@typings/ui/media-store.types';
 import { PlayerstackElement } from '@ui/playerstack-element';
 import { buildSettingsOptions, buildSettingsLabel, settingsInitialState } from '@ui-utils';
+import { renderSvgFromDescriptor } from '@ui/icon-render';
+import { settingsIcon, arrowLeftIcon, arrowRightIcon } from '@icons/index';
 import en from '@i18n/en';
 
 /** Default accessible name used when no `aria-label` attribute is provided (Req 1.5). */
@@ -61,6 +63,15 @@ export class PlayerstackSettings extends PlayerstackElement {
   private _i18n: SettingsI18n | null = null;
 
   /**
+   * Ad-mode flag (default `false`). When `true` it is forwarded to `buildSettingsOptions`,
+   * which drops the Speed category (`if (!live && !adMode)`) so speed can NOT be changed during
+   * an ad — mirroring the original `useSettingsOptions({ adMode })` behavior. If the resulting
+   * option set is EMPTY (e.g. an ad with no quality/caption options) the settings button hides
+   * itself via `data-empty`, matching the original `if (settingsOptions.length === 0) return null`.
+   */
+  private _adMode = false;
+
+  /**
    * Local open/closed UI state mirroring `settingsInitialState` from `@ui-utils`. `generalMenu`
    * tracks whether the main panel is open; `speed`/`quality` track which submenu is open.
    * Captions is unused here (the settings element only owns speed + quality) but kept so the
@@ -84,6 +95,14 @@ export class PlayerstackSettings extends PlayerstackElement {
 
   /** Latest playbackQuality mirrored from the store, used to mark the active quality option. */
   private playbackQuality: number | null = null;
+
+  /**
+   * Timer id for the submenu slide-in reveal. The original `DropdownOverlay` flips a local
+   * `show` flag 100ms AFTER the panel becomes visible so the content transitions in from the
+   * right (`translateX(100px)->0`). We mirror that by toggling `data-show` on the submenu on a
+   * short timeout, cleared on every navigation so a rapid open/close never leaves it stuck.
+   */
+  private submenuShowTimer: ReturnType<typeof setTimeout> | null = null;
 
   /**
    * Public setter for the quality option list (default `[]`). Rebuilds the menu so the new
@@ -112,16 +131,65 @@ export class PlayerstackSettings extends PlayerstackElement {
   }
 
   /**
+   * Public setter for the ad-mode flag (default `false`). Rebuilds the menu so the Speed
+   * category is dropped and the empty-options guard re-evaluates immediately when an ad starts
+   * or ends. Coerced to a boolean so a truthy/falsy prop assignment behaves predictably.
+   */
+  set adMode(value: boolean) {
+    this._adMode = Boolean(value);
+    this.rebuildMenu();
+  }
+
+  get adMode(): boolean {
+    return this._adMode;
+  }
+
+  /**
    * Tracks the current playbackRate/quality from the store so the active option can be marked
    * (Req 3.3). Reflects `data-quality` on the host as a stable state hook and re-marks the
-   * active entries in whichever panel is currently rendered. Only the fields this element
-   * cares about are reflected, per the base class's opt-in `onStoreChange` design.
+   * active entries in whichever panel is currently rendered. Also updates the "HD" badge and
+   * refreshes the current-value labels in the main menu rows.
    */
   override onStoreChange(state: Readonly<MediaStoreState>): void {
     this.playbackRate = state.playbackRate;
     this.playbackQuality = state.playbackQuality;
     this.reflectState({ quality: state.playbackQuality });
     this.markActiveOptions();
+    this.refreshValueLabels();
+    this.refreshFullHDBadge();
+  }
+
+  /**
+   * Refreshes the current-value text in each visible main-menu row. Called from `onStoreChange`
+   * so the displayed label (e.g. "Normal" for speed, "720p" for quality) stays in sync without a
+   * full `renderPanels` rebuild.
+   */
+  private refreshValueLabels(): void {
+    if (this.menu === null) {
+      return;
+    }
+    const i18n = this.resolveI18n();
+    const items = this.menu.querySelectorAll('[part="menu-item"]');
+    items.forEach((node) => {
+      const element = node as HTMLElement;
+      const category = element.getAttribute('data-category') ?? '';
+      const valueSpan = element.querySelector('[part="menu-item-value"]') as HTMLElement | null;
+      if (valueSpan) {
+        valueSpan.textContent = this.currentValueLabel(category, i18n);
+      }
+    });
+  }
+
+  /**
+   * Updates the `data-fullhd` host attribute based on the current tracked quality, so the gear's
+   * "HD" badge shows/hides without waiting for a full `renderPanels` cycle.
+   */
+  private refreshFullHDBadge(): void {
+    if (this.isActiveQualityFullHD()) {
+      this.setAttribute('data-fullhd', 'true');
+    } else {
+      this.removeAttribute('data-fullhd');
+    }
   }
 
   /**
@@ -136,17 +204,50 @@ export class PlayerstackSettings extends PlayerstackElement {
   /**
    * Builds the top-level settings structure from the SAME pure helper the rest of Core uses
    * (Req 1.6). Captions are intentionally excluded (`captionOptions: null`) since this element
-   * owns speed + quality only; `live`/`adMode` stay `false` so the Speed entry is always
-   * available with its default options.
+   * owns speed + quality only; `live` stays `false` while `adMode` is forwarded from the public
+   * flag so an ad drops the Speed category (speed is not changeable during an ad), matching the
+   * original hook.
    */
   private buildOptions(): SettingsOption[] {
     return buildSettingsOptions({
       qualityOptions: this._qualityOptions,
       captionOptions: null,
       live: false,
-      adMode: false,
+      adMode: this._adMode,
       i18n: this.resolveI18n(),
     });
+  }
+
+  /**
+   * Resolves the CURRENT value label shown on a main-menu row (the original `values[item.value]`
+   * — e.g. Speed row shows "Normal", Quality row shows the active resolution or "Auto"). Speed
+   * derives from the tracked `playbackRate`; quality maps the tracked `playbackQuality` to its
+   * option label (0/absent -> "Auto"). Uses the shared `buildSettingsLabel` so labels match the
+   * rest of Core (Req 1.6).
+   */
+  private currentValueLabel(category: string, i18n: SettingsI18n): string {
+    if (category === SPEED_KEY) {
+      return buildSettingsLabel({ label: SPEED_KEY, value: String(this.playbackRate), i18n });
+    }
+    if (category === QUALITY_KEY) {
+      const q = this.playbackQuality ?? 0;
+      return buildSettingsLabel({ label: QUALITY_KEY, value: String(q), i18n });
+    }
+    return '';
+  }
+
+  /**
+   * Reports whether the currently active QUALITY option is full-HD, so the gear button can show
+   * the "HD" badge (original `values.quality?.isFullHD`). Matches the tracked `playbackQuality`
+   * against the provided `qualityOptions` and reads their `isFullHD` flag.
+   */
+  private isActiveQualityFullHD(): boolean {
+    const q = this.playbackQuality;
+    if (q === null || q === 0) {
+      return false;
+    }
+    const match = this._qualityOptions.find((option) => option.value === String(q));
+    return match?.isFullHD === true;
   }
 
   /**
@@ -173,6 +274,23 @@ export class PlayerstackSettings extends PlayerstackElement {
       quality: category === QUALITY_KEY,
     };
     this.renderPanels();
+  }
+
+  /**
+   * Reflects whether the built option set is empty onto `data-empty` on the host so the
+   * Style_Layer hides the whole settings control (`playerstack-settings[data-empty]{display:none}`),
+   * mirroring the original component returning `null` when `settingsOptions.length === 0`. When
+   * empty it also resets the local open state so no panel is left open behind the hidden button.
+   */
+  private reflectEmptyState(isEmpty: boolean): void {
+    if (isEmpty) {
+      this.setAttribute('data-empty', 'true');
+      // A hidden control must not keep an open menu; reset the bookkeeping + `data-open`.
+      this.uiState = { ...settingsInitialState };
+      this.reflectOpenState();
+    } else {
+      this.removeAttribute('data-empty');
+    }
   }
 
   /** Reflects the current open state to `data-open` on the host so the Style_Layer reacts. */
@@ -221,6 +339,10 @@ export class PlayerstackSettings extends PlayerstackElement {
     // Gear glyph: class names match the Style_Layer selectors that render the settings icon.
     const icon = document.createElement('span');
     icon.className = 'icon icon-settings';
+    // Inject the real gear SVG glyph into the span's OWN innerHTML (safe: the serializer
+    // escapes attribute values). The span belongs to this element, not the shadow root, so the
+    // adopted Style_Layer survives. The `icon-settings` class is kept for Style_Layer targeting.
+    icon.innerHTML = renderSvgFromDescriptor(settingsIcon);
     button.appendChild(icon);
 
     const onButtonClick = (): void => this.toggleMenu();
@@ -236,6 +358,9 @@ export class PlayerstackSettings extends PlayerstackElement {
     this.settingsButton = button;
     this.menu = menu;
     this.submenu = submenu;
+
+    // Ensure a pending slide-in timer never survives teardown.
+    this.addDisposer(() => this.clearSubmenuReveal());
 
     // Append (never clobber) so the adopted Style_Layer / fallback `<style>` survives.
     this.root.appendChild(button);
@@ -261,6 +386,14 @@ export class PlayerstackSettings extends PlayerstackElement {
    * Renders the top-level menu and, when a category is open, its submenu. Rebuilds the panel
    * children from the freshly-built option structure so navigation state and inputs stay
    * reflected in the DOM. Active options are marked afterwards.
+   *
+   * Structure mirrors the original two-level dropdown: each MAIN row shows `{label} …
+   * {current value} ›` (`StyledDropdownTitle` + `StyledDropdownValue` + `ArrowRightIcon`).
+   * Opening a category REPLACES the main menu with a submenu that has a back-navigation header
+   * (`StyledDropdownHeader`: `ArrowLeftIcon` + category title) plus the option list; the
+   * whichever-panel-is-open bookkeeping drives `data-submenu` on the host so the Style_Layer can
+   * hide the main menu while a submenu is open. The active quality full-HD state drives
+   * `data-fullhd` for the gear's "HD" badge.
    */
   private renderPanels(): void {
     if (this.menu === null || this.submenu === null) {
@@ -268,16 +401,55 @@ export class PlayerstackSettings extends PlayerstackElement {
     }
 
     const options = this.buildOptions();
+    const i18n = this.resolveI18n();
 
-    // Main menu: one row per top-level category (Speed / Quality). Clicking a row opens its
-    // submenu without leaving the main menu.
+    // Empty-options guard (parity with the original `if (settingsOptions.length === 0) return null`):
+    // when there is nothing to configure — e.g. an ad with no quality/caption options — reflect
+    // `data-empty` on the host so the Style_Layer hides the settings button entirely, and close
+    // any open panel so a dangling menu can't linger. When options come back, drop `data-empty`.
+    this.reflectEmptyState(options.length === 0);
+
+    // "HD" badge on the gear when the ACTIVE quality is full-HD (original `values.quality?.isFullHD`).
+    if (this.isActiveQualityFullHD()) {
+      this.setAttribute('data-fullhd', 'true');
+    } else {
+      this.removeAttribute('data-fullhd');
+    }
+
+    // Which submenu (if any) is currently open.
+    const openCategory = this.uiState.speed ? SPEED_KEY : this.uiState.quality ? QUALITY_KEY : null;
+    // Reflect the open submenu so the Style_Layer hides the main menu behind it.
+    if (openCategory !== null) {
+      this.setAttribute('data-submenu', openCategory);
+    } else {
+      this.removeAttribute('data-submenu');
+    }
+
+    // Main menu: one row per top-level category (Speed / Quality). Each row shows the label on
+    // the left and the current value + right-chevron on the right; clicking opens its submenu.
     this.menu.replaceChildren();
     for (const option of options) {
       const item = document.createElement('button');
       item.setAttribute('type', 'button');
       item.setAttribute('part', 'menu-item');
       item.setAttribute('data-category', option.value);
-      item.textContent = option.label;
+
+      const title = document.createElement('span');
+      title.setAttribute('part', 'menu-item-title');
+      title.textContent = option.label;
+
+      const value = document.createElement('span');
+      value.setAttribute('part', 'menu-item-value');
+      value.textContent = this.currentValueLabel(option.value, i18n);
+
+      const arrow = document.createElement('span');
+      arrow.setAttribute('part', 'menu-item-arrow');
+      arrow.className = 'icon';
+      arrow.innerHTML = renderSvgFromDescriptor(arrowRightIcon);
+
+      item.appendChild(title);
+      item.appendChild(value);
+      item.appendChild(arrow);
 
       const onItemClick = (): void => {
         if (option.value === SPEED_KEY || option.value === QUALITY_KEY) {
@@ -289,12 +461,39 @@ export class PlayerstackSettings extends PlayerstackElement {
       this.menu.appendChild(item);
     }
 
-    // Submenu: options for whichever category is currently open (if any).
+    // Submenu: a back-navigation header + the option list for whichever category is open.
     this.submenu.replaceChildren();
-    const openCategory = this.uiState.speed ? SPEED_KEY : this.uiState.quality ? QUALITY_KEY : null;
     if (openCategory !== null) {
       const category = options.find((option) => option.value === openCategory);
-      const i18n = this.resolveI18n();
+
+      // Header (StyledDropdownHeader): back button = left-arrow glyph + category title.
+      const header = document.createElement('div');
+      header.setAttribute('part', 'submenu-header');
+
+      const back = document.createElement('button');
+      back.setAttribute('type', 'button');
+      back.setAttribute('part', 'submenu-back');
+
+      const backArrow = document.createElement('span');
+      backArrow.className = 'icon';
+      backArrow.innerHTML = renderSvgFromDescriptor(arrowLeftIcon);
+
+      const backTitle = document.createElement('span');
+      backTitle.textContent = category?.label ?? '';
+
+      back.appendChild(backArrow);
+      back.appendChild(backTitle);
+
+      const onBack = (): void => this.goBackToMenu();
+      back.addEventListener('click', onBack);
+      this.addDisposer(() => back.removeEventListener('click', onBack));
+      header.appendChild(back);
+      this.submenu.appendChild(header);
+
+      // Content wrapper (StyledDropdownContent): slide-in reveal target.
+      const content = document.createElement('div');
+      content.setAttribute('part', 'submenu-content');
+
       for (const child of category?.options ?? []) {
         const item = document.createElement('button');
         item.setAttribute('type', 'button');
@@ -304,14 +503,61 @@ export class PlayerstackSettings extends PlayerstackElement {
         // reads "Auto" consistently with the rest of Core (Req 1.6).
         item.textContent = buildSettingsLabel({ label: openCategory, value: child.value, i18n });
 
+        // Full-HD quality options carry an "HD" sub-badge (StyledDropdownItemValueSub).
+        if (openCategory === QUALITY_KEY && child.isFullHD === true) {
+          const badge = document.createElement('sub');
+          badge.setAttribute('part', 'hd-badge');
+          badge.textContent = i18n.hd ?? 'HD';
+          item.appendChild(badge);
+        }
+
         const onChildClick = (): void => this.selectOption(openCategory, child.value);
         item.addEventListener('click', onChildClick);
         this.addDisposer(() => item.removeEventListener('click', onChildClick));
-        this.submenu.appendChild(item);
+        content.appendChild(item);
       }
+      this.submenu.appendChild(content);
+
+      // Slide-in reveal: original flips `show` 100ms after the panel is shown so the content
+      // transitions from translateX(100px)->0. Toggle `data-show` on a short timeout, resetting
+      // it first so a fresh navigation always re-plays the animation.
+      this.scheduleSubmenuReveal();
+    } else {
+      this.clearSubmenuReveal();
     }
 
     this.markActiveOptions();
+  }
+
+  /**
+   * Schedules the submenu slide-in: clears any pending timer, removes `data-show` so the panel
+   * starts off-screen, then re-adds it after 100ms — mirroring the original `setShow(false)` +
+   * `setTimeout(() => setShow(true), 100)`.
+   */
+  private scheduleSubmenuReveal(): void {
+    this.clearSubmenuReveal();
+    this.submenuShowTimer = setTimeout(() => {
+      this.submenu?.setAttribute('data-show', 'true');
+      this.submenuShowTimer = null;
+    }, 100);
+  }
+
+  /** Clears the pending reveal timer and hides the slide-in state. */
+  private clearSubmenuReveal(): void {
+    if (this.submenuShowTimer !== null) {
+      clearTimeout(this.submenuShowTimer);
+      this.submenuShowTimer = null;
+    }
+    this.submenu?.removeAttribute('data-show');
+  }
+
+  /**
+   * Returns from an open submenu to the main menu (original `handleGoBack`): keeps the general
+   * menu open, clears the category selection, and re-renders so the main rows show again.
+   */
+  private goBackToMenu(): void {
+    this.uiState = { ...settingsInitialState, generalMenu: true };
+    this.renderPanels();
   }
 
   /**

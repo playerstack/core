@@ -77,11 +77,13 @@ export const domFrameworkAdapter: FrameworkAdapterContract = {
  * list is the exact set of event types the element passes to `dispatchRequest`.
  */
 export const UI_ELEMENT_BINDINGS: readonly UiElementBinding[] = [
-  // Root host: no observed attributes and no requests of its own; it only owns/provides
-  // the store and injects global tokens.
+  // Root host: owns/provides the store and injects global tokens. `data-skin-mode` is declared
+  // as an attribute so the React_Adapter REFLECTS it to the DOM (not as a JS property) — the
+  // Style_Layer's mobile/desktop rules key off `playerstack-media-controller[data-skin-mode=…]`,
+  // so it must be a real attribute. `data-skin` (audio) is reflected for the same reason.
   {
     tagName: 'playerstack-media-controller',
-    attributes: [],
+    attributes: ['data-skin-mode', 'data-skin'],
     requestEvents: [],
   },
   // Play/pause toggle: `aria-label` accessible name; emits play/pause intent.
@@ -147,18 +149,21 @@ export const UI_ELEMENT_BINDINGS: readonly UiElementBinding[] = [
     attributes: [],
     requestEvents: [],
   },
-  // Right-click menu: no observed attributes; emits loop + enter/exit PiP + enter/exit
-  // fullscreen intents.
+  // Right-click menu: no observed attributes; emits loop + enter/exit PiP intents (parity: the
+  // original menu offered only Loop + Picture in Picture, no Fullscreen row). Gating props
+  // (`adMode`/`live`/`pipEnabled`/`i18n`) are set through the property channel.
   {
     tagName: 'playerstack-context-menu',
     attributes: [],
-    requestEvents: [
-      'playerstack-loop-request',
-      'playerstack-enter-pip-request',
-      'playerstack-exit-pip-request',
-      'playerstack-enter-fullscreen-request',
-      'playerstack-exit-fullscreen-request',
-    ],
+    requestEvents: ['playerstack-loop-request', 'playerstack-enter-pip-request', 'playerstack-exit-pip-request'],
+  },
+  // Mobile settings panel: full-surface quality/speed/captions panel. Rich props
+  // (`qualityOptions`/`captions`/`i18n`/`adMode`) are set through the property channel; it emits
+  // rate/quality/caption intents on selection.
+  {
+    tagName: 'playerstack-mobile-settings',
+    attributes: [],
+    requestEvents: ['playerstack-rate-request', 'playerstack-quality-request', 'playerstack-caption-request'],
   },
   // Loading/buffering overlay: display-only, no attributes, no requests.
   {

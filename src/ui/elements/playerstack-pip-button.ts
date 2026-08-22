@@ -24,6 +24,8 @@
 import type { PipButtonDefaultLabel } from '@typings/ui/playerstack-pip-button.types';
 import type { MediaStoreState } from '@typings/ui/media-store.types';
 import { PlayerstackElement } from '@ui/playerstack-element';
+import { renderSvgFromDescriptor } from '@ui/icon-render';
+import { pipIcon } from '@icons/index';
 
 /** Default accessible name used when no `aria-label` attribute is provided (Req 1.5). */
 const DEFAULT_LABEL: PipButtonDefaultLabel = 'Picture in Picture';
@@ -81,8 +83,14 @@ export class PlayerstackPipButton extends PlayerstackElement {
     // glyph based on the reflected `data-pip` state (Req 3.3).
     const iconEnter = document.createElement('span');
     iconEnter.className = 'icon icon-enter-pip';
+    // Inject the real SVG glyph into each span's OWN innerHTML (safe: the serializer escapes
+    // attribute values). The spans belong to this element, not the shadow root, so the adopted
+    // Style_Layer survives. The `icon-*` classes are kept so the state toggle still swaps them.
+    // There is no distinct exit-PiP descriptor, so the same `pipIcon` is reused for both glyphs.
+    iconEnter.innerHTML = renderSvgFromDescriptor(pipIcon);
     const iconExit = document.createElement('span');
     iconExit.className = 'icon icon-exit-pip';
+    iconExit.innerHTML = renderSvgFromDescriptor(pipIcon);
     button.appendChild(iconEnter);
     button.appendChild(iconExit);
 
