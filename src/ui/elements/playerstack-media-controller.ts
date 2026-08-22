@@ -147,9 +147,20 @@ export class PlayerstackMediaController extends PlayerstackElement {
     // reflections for those — the volume reveal is driven by `:hover` and the ad-mode slider
     // styling keys off the ad-overlay host — keeping the controller free of state it cannot
     // derive from the store.
+    // `loading`/`buffering` mirror the store's `isLoading`/`isBuffering` onto the stage host so
+    // the Style_Layer can gate STAGE-WIDE loading affordances that a single element cannot own.
+    // Concretely (parity with the original mobile MobileCenterControls, which rendered a spinner
+    // IN PLACE OF the center play/pause button via `isLoading ? <Spinner/> : <PlayButton/>`): the
+    // mobile center play-state button is hidden while `[data-loading]`/`[data-buffering]` is set
+    // so the center spinner shows in its place instead of overlapping the glyph. Reflected as a
+    // single derived `data-buffering` (loading OR buffering) plus the discrete `data-loading`, so
+    // the CSS can key off either; `null` removes them so the gate uses attribute PRESENCE.
+    const isLoadingOrBuffering = state.isLoading || state.isBuffering;
     this.reflectState({
       fullscreen: state.isFullScreen ? true : null,
       timeSliding: state.seeking ? true : null,
+      loading: state.isLoading ? true : null,
+      buffering: isLoadingOrBuffering ? true : null,
     });
   }
 

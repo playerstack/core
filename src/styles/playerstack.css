@@ -2107,7 +2107,13 @@ playerstack-media-controller[data-fullscreen] [part='ad-skip-button'] {
 [part='double-tap'] {
   position: absolute;
   inset: 0;
-  z-index: 8;
+  /* z-index 6 (parity with the original StyledSkipTapArea z-index:6): the double-tap zones sit
+     BELOW the mobile center controls (z-index 7). So when controls are VISIBLE the center
+     play/pause button wins the tap (toggles playback), and only when controls are hidden — or
+     the tap lands away from the center button — do the zones receive it (single tap = toggle
+     controls, double tap = skip). Previously this host was z-index 8, ABOVE the center controls,
+     so the skip zones swallowed EVERY center tap and play/pause never fired on mobile. */
+  z-index: 6;
   pointer-events: none;
 }
 
@@ -2342,6 +2348,147 @@ playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-center-contr
   opacity: 0.9;
 }
 
+/* -------------------------------------------------------------------------- */
+/* Mobile center PLAY-STATE (playerstack-play-state) overrides.                */
+/*                                                                            */
+/* On mobile the center affordance is the `playerstack-play-state` element     */
+/* placed INSIDE `[part='mobile-center-controls']`. Its DESKTOP styling is a    */
+/* full-stage black scrim (`inset:0`, `rgba(0,0,0,0.5)`) that is shown ONLY     */
+/* while paused/ended (`data-showing`). That is WRONG for the mobile skin,      */
+/* which (parity with the original MobileCenterControls > StyledMobilePlayButton)*/
+/* needs a compact 56px TRANSPARENT button that is visible whenever the         */
+/* CONTROLS are visible — showing the play glyph when paused, the REPLAY glyph  */
+/* when ended, and the PAUSE glyph while playing — and toggles play/pause on     */
+/* tap. So here the play-state is reshaped to that 56px button, its scrim is     */
+/* removed, and its visibility is driven by the controls-visible state          */
+/* (`:not([data-hiding])`) instead of the paused-only `data-showing` gate.       */
+/* -------------------------------------------------------------------------- */
+
+/* The play-state HOST element defaults to `position:absolute; inset:0` (overlay host base), which
+   stretches it full-width inside the centered mobile controls row and pins its button to the
+   LEFT. On mobile make the host a compact inline 56px box so the flex row centers it like the
+   original MobileCenterControls play button. */
+playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-center-controls'] playerstack-play-state {
+  position: relative;
+  inset: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  flex: 0 0 auto;
+}
+
+/* Reshape the overlay + button into the compact 56px center button (no full-stage scrim). */
+playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-center-controls'] [part='play-state'] {
+  position: relative;
+  inset: auto;
+  width: 56px;
+  height: 56px;
+  overflow: visible;
+  background: none;
+  /* Visibility is controlled by the button rule below (via the controls-visible state), not by
+     the desktop paused-only `data-showing` opacity gate. */
+  opacity: 1;
+  pointer-events: auto;
+}
+
+playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-center-controls'] [part='play-state-button'] {
+  width: 56px;
+  height: 56px;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  opacity: 0.9;
+  font-size: 0;
+}
+
+playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-center-controls'] [part='play-state-button']:hover,
+playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-center-controls'] [part='play-state-button']:focus {
+  background: none;
+  opacity: 1;
+}
+
+/* The center glyph fills the 56px button (override the desktop 20%/14% width). */
+playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-center-controls'] [part='play-state-button'] .icon {
+  width: 100%;
+  height: 100%;
+}
+
+/* Glyph selection on mobile (parity with StyledMobilePlayButton): show the PAUSE glyph while
+   playing, the PLAY glyph while paused, the REPLAY glyph when ended. The desktop rules hide the
+   pause glyph in the center overlay and only show play/replay; re-enable the mobile pause glyph
+   and gate all three by the reflected `data-playing`/`data-ended` state. */
+playerstack-media-controller[data-skin-mode='mobile']
+  [part='mobile-center-controls']
+  playerstack-play-state:not([data-ended='true'])[data-playing='true']
+  .icon-pause {
+  display: inline-flex;
+}
+playerstack-media-controller[data-skin-mode='mobile']
+  [part='mobile-center-controls']
+  playerstack-play-state:not([data-ended='true'])[data-playing='true']
+  .icon-play {
+  display: none;
+}
+playerstack-media-controller[data-skin-mode='mobile']
+  [part='mobile-center-controls']
+  playerstack-play-state:not([data-ended='true'])[data-playing='false']
+  .icon-pause {
+  display: none;
+}
+
+/* Visibility follows the CONTROLS: hidden (and non-interactive) while the controller is hiding,
+   shown otherwise — so the center button appears with the rest of the chrome and disappears with
+   it, exactly like the original MobileCenterControls `$visible` gate. This overrides the desktop
+   paused-only `data-showing` opacity gate that would otherwise hide the button during playback. */
+playerstack-media-controller[data-skin-mode='mobile'][data-hiding] [part='mobile-center-controls'] playerstack-play-state,
+playerstack-media-controller[data-skin-mode='mobile'][data-hiding] [part='mobile-center-controls'] [part='play-state'],
+playerstack-media-controller[data-skin-mode='mobile'][data-hiding] [part='mobile-center-controls'] [part='play-state-button'] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Loading/buffering: the center SPINNER must REPLACE the play/pause button (parity with the
+   original MobileCenterControls `isLoading ? <Spinner/> : <PlayButton/>`), not sit BEHIND it (the
+   reported bug: the spinner ring rendered around the pause glyph). While the controller reflects
+   `data-loading`/`data-buffering`, HIDE the mobile center play-state button entirely so only the
+   mobile spinner shows — a clean, fluid swap of the SVG for the ring. */
+playerstack-media-controller[data-skin-mode='mobile'][data-loading] [part='mobile-center-controls'] playerstack-play-state,
+playerstack-media-controller[data-skin-mode='mobile'][data-buffering] [part='mobile-center-controls'] playerstack-play-state {
+  display: none;
+}
+
+/* Mobile spinner = the ORIGINAL StyledMobileSpinner: a compact 40px ring centered on the stage
+   with NO full-stage dark scrim (the desktop `[part='spinner']` paints a `rgba(0,0,0,0.5)`
+   backdrop — wrong for mobile, which only showed the ring in the center-controls slot). Override
+   the mobile spinner container to be transparent + centered. */
+playerstack-media-controller[data-skin-mode='mobile'] [part='spinner'] {
+  background: none;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Mobile ring = EXACTLY the original StyledMobileSpinner `& > div`: a 40px circle, 3px border at
+   `rgba(255,255,255,0.3)` with a solid white TOP, spinning at 0.8s. The base `[part='spinner-
+   indicator']` has TWO conflicting definitions in this file (a 48px faint-arc "loading arc" with
+   `rgba(0.15)` sides + white LEFT, and the 40px mobile ring); to guarantee the mobile skin gets
+   the original mobile ring regardless of cascade order, pin it explicitly here. */
+playerstack-media-controller[data-skin-mode='mobile'] [part='spinner-indicator'] {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-right-color: rgba(255, 255, 255, 0.3);
+  border-bottom-color: rgba(255, 255, 255, 0.3);
+  border-left-color: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  animation: playerstack-spinner 0.8s linear infinite;
+}
+
 /* Mobile prev/next nav buttons (StyledMobileNavButton): 48px, dimmed when disabled. */
 playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-center-controls'] [part='nav-prev'],
 playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-center-controls'] [part='nav-next'] {
@@ -2499,36 +2646,85 @@ playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-bottom-bar']
   align-items: center;
 }
 
-/* Flat 2px rail (no desktop hover thickening). */
-playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-bottom-bar'] [part='track'],
-playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-bottom-bar']:hover [part='track'],
-playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-bottom-bar'] [part='slider']:hover [part='track'] {
+/* Flat 2px rail (no desktop hover thickening). The visible grey rail background applies ONLY when
+   there are NO chapters (`:not([data-has-chapters])`) — parity with the original mobile skin,
+   which rendered the plain `StyledMobileProgressTrack` ONLY in the non-chapter branch and the
+   `MobileChapterSegments` (with their OWN per-segment rails) otherwise. Gating on
+   `:not([data-has-chapters])` keeps the grey rail from re-appearing ON HOVER over the whole
+   timeline when chapters exist (the reported full-width grey bar that covered the chapter gaps). */
+playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-bottom-bar'] playerstack-time-slider:not([data-has-chapters]) [part='track'],
+playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-bottom-bar']:hover playerstack-time-slider:not([data-has-chapters]) [part='track'],
+playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-bottom-bar'] playerstack-time-slider:not([data-has-chapters]) [part='slider']:hover [part='track'] {
   height: 2px;
   background: rgba(255, 255, 255, 0.3);
   border-radius: 1px;
   transform: translateY(-50%);
 }
 
-playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-bottom-bar'] [part='track-buffered'] {
+/* Shape (height/position) for the rail in the chapters case too, but WITHOUT a background — the
+   chapter segments are the timeline; the plain rail must stay invisible in every state (rest AND
+   hover) so it never paints a full-width grey bar over the chapter gaps. */
+playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-bottom-bar'] playerstack-time-slider[data-has-chapters] [part='track'],
+playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-bottom-bar']:hover playerstack-time-slider[data-has-chapters] [part='track'],
+playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-bottom-bar'] playerstack-time-slider[data-has-chapters] [part='slider']:hover [part='track'] {
+  height: 2px;
+  background: transparent;
+  border-radius: 1px;
+  transform: translateY(-50%);
+}
+
+/* Plain buffered/fill rails only paint in the NON-chapter case (the chapter segments carry their
+   own buffered/filled sub-fills). In the chapters case the element already zeroes their widths,
+   but scope the colors to `:not([data-has-chapters])` for clarity/parity. */
+playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-bottom-bar'] playerstack-time-slider:not([data-has-chapters]) [part='track-buffered'] {
   height: 2px;
   background: rgba(255, 255, 255, 0.5);
 }
 
-playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-bottom-bar'] [part='track-fill'] {
+playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-bottom-bar'] playerstack-time-slider:not([data-has-chapters]) [part='track-fill'] {
   height: 2px;
   background: #cb0e0b;
 }
 
-/* Flat 12px handle (no desktop hover pop). */
+/* Flat 12px handle (no desktop hover pop). The desktop handle POPS with a `scale(1)` and a
+   `box-shadow: 0 0 0 5px rgba(255,0,0,0.2)` red halo on hover/`[data-time-sliding]`; on mobile
+   that halo rendered as a red square block around the thumb (the reported "element above the
+   timeline"). Force the flat mobile handle with NO box-shadow across the rest, hover, slide and
+   local-sliding states so the halo never appears. `transform` stays the plain centering (no
+   scale-pop) since the mobile handle is always visible at 12px. */
 playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-bottom-bar'] [part='thumb'],
 playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-bottom-bar']:hover [part='thumb'],
-playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-bottom-bar'] [part='slider']:hover [part='thumb'] {
+playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-bottom-bar'] [part='slider']:hover [part='thumb'],
+playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-bottom-bar'] [part='time-slider']:hover [part='thumb'],
+playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-bottom-bar'] [part='time-slider']:focus [part='thumb'],
+playerstack-media-controller[data-skin-mode='mobile'][data-time-sliding] [part='mobile-bottom-bar'] [part='thumb'],
+playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-bottom-bar'] playerstack-time-slider[data-time-sliding] [part='thumb'] {
   width: 12px;
   height: 12px;
   border-radius: 50%;
   background: #cb0e0b;
   border: 0;
-  transform: translate(-50%, -50%);
+  /* `!important` because the desktop touch rule `@media (hover:none),(pointer:coarse)
+     [part='time-slider'] [part='thumb']` and the desktop `[part='time-slider']:hover
+     [part='thumb']` rule (the red `box-shadow:0 0 0 5px rgba(255,0,0,0.2)` halo) live in a
+     media-query / equal-ish specificity that can win on a REAL touch device and paint the big
+     halo/scaled thumb seen on the mobile timeline. Pin the flat 12px handle with no halo and no
+     scale-pop. */
+  box-shadow: none !important;
+  transform: translate(-50%, -50%) !important;
+}
+
+/* Touch/coarse-pointer devices: the desktop `@media (hover:none),(pointer:coarse)` rule pops the
+   handle (`scale(1)`) — on a real phone that combined with the hover halo above to render the
+   oversized thumb + dark ring. Re-pin the flat mobile handle inside the same media query so the
+   real device matches the diagnostics (flat 12px, no ring). */
+@media (hover: none), (pointer: coarse) {
+  playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-bottom-bar'] [part='thumb'] {
+    width: 12px;
+    height: 12px;
+    box-shadow: none !important;
+    transform: translate(-50%, -50%) !important;
+  }
 }
 
 /* Chapter segments in the mobile bottom bar (MobileChapterSegments): 2px tall row, translucent
@@ -2539,12 +2735,23 @@ playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-bottom-bar']
   top: 50%;
   transform: translateY(-50%);
   gap: 2px;
+  /* `overflow:visible` (parity with the original StyledMobileChapterSegmentsContainer) so the
+     hovered segment's `scaleY(2.5)` grow during a scrub is not clipped. Horizontal overflow is
+     prevented by letting the segments SHRINK (below) rather than by clipping. */
+  overflow: visible;
 }
 
+/* The per-segment widths sum to 100% of the duration, and the flex `gap:2px`s add ON TOP of that,
+   which pushed the LAST segment ~6px past the rail ("llega más allá del límite real"). The ORIGINAL
+   segments were plain flex children (default `flex-shrink:1`), so the row shrank to absorb the gaps
+   and never overflowed. Core inherited `flex:0 0 auto` from the desktop base (no shrink), causing
+   the overflow — so restore shrink here (`flex-shrink:1`, `min-width:0`) to match the original. */
 playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-bottom-bar'] [part='chapter-segment'] {
   height: 2px;
   background-color: rgba(255, 255, 255, 0.3);
   border-radius: 1px;
+  flex-shrink: 1;
+  min-width: 0;
 }
 
 playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-bottom-bar'] [part='chapter-segment-buffered'] {
@@ -2555,8 +2762,36 @@ playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-bottom-bar']
   background: #cb0e0b;
 }
 
-/* Mobile chapter hover-grow is stronger (scaleY 2.5) than desktop (2). */
-playerstack-media-controller[data-skin-mode='mobile'] [part='mobile-bottom-bar'] [part='chapter-segment'][data-hovered] {
+/* Mobile chapter-segment grow — 1:1 PARITY with the original MobileChapterSegments. The original
+   grew ONLY the segment under the pointer to `scaleY(2.5)`, and it set `hoveredIndex` ONLY while
+   ACTIVELY seeking (`seeking && chapterAtCurrentTime`) — never on a plain hover, and it never
+   thickened the whole rail. So on mobile:
+     - the base rail/track and NON-hovered segments stay FLAT (2px) in every state (no whole-row
+       thicken — that read as an exaggerated bar);
+     - the desktop `[data-hovered] { scaleY(2) }` grow is neutralized on plain hover so a stray
+       touch-hover never leaves a segment popped;
+     - ONLY while the slider is actively sliding does the hovered segment grow `scaleY(2.5)` from
+       its center, exactly like the original seek affordance.
+   The `transform-origin:center` keeps the grow symmetric so it never spills only upward. */
+playerstack-media-controller[data-skin-mode='mobile']
+  [part='mobile-bottom-bar']
+  [part='chapter-segment'],
+playerstack-media-controller[data-skin-mode='mobile']
+  [part='mobile-bottom-bar']
+  [part='chapter-segment'][data-hovered] {
+  transform-origin: center center;
+  transform: scaleY(1);
+  transition: transform 0.1s ease;
+}
+
+/* Active scrub: grow ONLY the hovered segment (parity with the original seek affordance). */
+playerstack-media-controller[data-skin-mode='mobile'][data-time-sliding]
+  [part='mobile-bottom-bar']
+  [part='chapter-segment'][data-hovered],
+playerstack-media-controller[data-skin-mode='mobile']
+  [part='mobile-bottom-bar']
+  playerstack-time-slider[data-time-sliding]
+  [part='chapter-segment'][data-hovered] {
   transform: scaleY(2.5);
 }
 
